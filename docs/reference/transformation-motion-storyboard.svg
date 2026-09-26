@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="980" viewBox="0 0 1800 980" role="img" aria-labelledby="title desc">
+  <title id="title">Mind Space transformation motion storyboard</title>
+  <desc id="desc">Six storyboard frames describe the 900 millisecond transformation from spatial objects to the structured task view, with timing, easing, continuity, and reduced-motion guidance.</desc>
+  <defs>
+    <radialGradient id="space" cx="50%" cy="45%" r="70%"><stop stop-color="#172039"/><stop offset=".48" stop-color="#0c1120"/><stop offset="1" stop-color="#070910"/></radialGradient>
+    <radialGradient id="ember" cx="35%" cy="30%" r="75%"><stop stop-color="#ecaa7f"/><stop offset=".3" stop-color="#cc6537"/><stop offset="1" stop-color="#7c301c"/></radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c4cfe7" stop-opacity=".22"/><stop offset="1" stop-color="#586682" stop-opacity=".08"/></linearGradient>
+    <style>
+      .label{font-family:"Avenir Next","SF Pro Display",sans-serif;fill:#f2ede4}.body{font-family:"Avenir Next","SF Pro Text",sans-serif;fill:#9fa8b8}.meta{font-family:"SFMono-Regular",Menlo,monospace;fill:#7f899c;font-size:11px;letter-spacing:1.25px}.frame{fill:url(#space);stroke:#2e3648;stroke-width:1}.task{fill:url(#glass);stroke:#aebbd5;stroke-opacity:.3}.trail{fill:none;stroke:#c45d32;stroke-opacity:.45;stroke-width:2;stroke-dasharray:5 6}.line{stroke:#31394a}.orange{fill:#c45d32}.blue{fill:#7089b8}.purple{fill:#8277aa}.green{fill:#668e79}
+    </style>
+  </defs>
+  <rect width="1800" height="980" fill="#080b12"/>
+  <text x="58" y="64" class="meta">REFERENCE 03 / TRANSFORMATION MOTION</text>
+  <text x="58" y="108" class="label" font-size="36" font-weight="600" letter-spacing="-1.2">Same data, changing its posture</text>
+  <text x="58" y="138" class="body" font-size="15">A 900 ms continuity transition: objects resolve into rows; nothing disappears, duplicates, or changes meaning.</text>
+
+  <!-- Frame 1 -->
+  <g transform="translate(58 190)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">00 MS / RESTING FIELD</text>
+    <ellipse cx="258" cy="155" rx="176" ry="72" fill="none" stroke="#91a0c0" stroke-opacity=".13"/>
+    <circle cx="261" cy="160" r="43" fill="url(#ember)"/>
+    <text x="261" y="157" class="label" font-size="8" text-anchor="middle" letter-spacing="1">MAKE IT</text><text x="261" y="170" class="label" font-size="9" font-weight="700" text-anchor="middle">MAKE SENSE</text>
+    <g transform="translate(70 70) rotate(-4)"><rect width="142" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="blue"/><text x="27" y="20" class="label" font-size="9">Studio critique</text><text x="14" y="36" class="meta" font-size="6">COURSEWORK</text></g>
+    <g transform="translate(335 78) rotate(4)"><rect width="132" height="46" rx="12" class="task"/><circle cx="16" cy="16" r="3" class="green"/><text x="27" y="19" class="label" font-size="9">Book train</text><text x="14" y="34" class="meta" font-size="6">PERSONAL</text></g>
+    <g transform="translate(328 214) rotate(-2)"><rect width="150" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="purple"/><text x="27" y="20" class="label" font-size="9">Essay references</text><text x="14" y="36" class="meta" font-size="6">WRITING</text></g>
+    <circle cx="115" cy="223" r="15" class="blue" opacity=".45"/>
+  </g>
+
+  <!-- Frame 2 -->
+  <g transform="translate(640 190)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">00–120 MS / COMMIT SIGNAL</text>
+    <circle cx="260" cy="155" r="74" fill="#c45d32" opacity=".08"/><circle cx="260" cy="155" r="50" fill="none" stroke="#db8058" stroke-opacity=".55"/>
+    <circle cx="260" cy="155" r="37" fill="url(#ember)"/>
+    <path d="M104 88 C158 105 199 124 224 143M407 96 C353 108 316 127 294 145M398 232 C347 211 313 188 291 169M125 224 C173 204 210 184 232 167" class="trail"/>
+    <g transform="translate(90 68) rotate(-1)"><rect width="142" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="blue"/><text x="27" y="20" class="label" font-size="9">Studio critique</text></g>
+    <g transform="translate(335 78) rotate(1)"><rect width="132" height="46" rx="12" class="task"/><circle cx="16" cy="16" r="3" class="green"/><text x="27" y="19" class="label" font-size="9">Book train</text></g>
+    <g transform="translate(328 215)"><rect width="150" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="purple"/><text x="27" y="20" class="label" font-size="9">Essay references</text></g>
+    <circle cx="125" cy="223" r="12" class="blue" opacity=".4"/>
+    <text x="260" y="253" class="body" font-size="11" text-anchor="middle">button depresses; drift stops before travel begins</text>
+  </g>
+
+  <!-- Frame 3 -->
+  <g transform="translate(1222 190)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">120–360 MS / CONVERGENCE</text>
+    <path d="M92 74 C188 70 224 95 255 135M418 82 C346 78 303 103 274 137M414 230 C344 225 304 196 276 171" class="trail"/>
+    <g transform="translate(156 82)"><rect width="142" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="blue"/><text x="27" y="20" class="label" font-size="9">Studio critique</text></g>
+    <g transform="translate(294 99)"><rect width="132" height="46" rx="12" class="task"/><circle cx="16" cy="16" r="3" class="green"/><text x="27" y="19" class="label" font-size="9">Book train</text></g>
+    <g transform="translate(282 187)"><rect width="150" height="48" rx="12" class="task"/><circle cx="16" cy="17" r="3" class="purple"/><text x="27" y="20" class="label" font-size="9">Essay references</text></g>
+    <circle cx="260" cy="158" r="27" fill="url(#ember)" opacity=".75"/>
+    <path d="M113 230 C174 206 217 185 238 168" class="trail"/>
+    <circle cx="168" cy="208" r="10" class="blue" opacity=".32"/>
+    <text x="24" y="260" class="body" font-size="11">Translate + de-rotate. Shape identity remains readable.</text>
+  </g>
+
+  <!-- Frame 4 -->
+  <g transform="translate(58 524)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">360–590 MS / AXIS APPEARS</text>
+    <rect x="40" y="57" width="92" height="204" rx="14" fill="#131925" stroke="#2a3343"/>
+    <rect x="50" y="84" width="72" height="26" rx="8" fill="#c45d32" fill-opacity=".15"/>
+    <line x1="166" y1="76" x2="470" y2="76" class="line"/>
+    <line x1="166" y1="127" x2="470" y2="127" class="line"/>
+    <line x1="166" y1="178" x2="470" y2="178" class="line"/>
+    <line x1="166" y1="229" x2="470" y2="229" class="line"/>
+    <g transform="translate(177 88)"><rect width="142" height="40" rx="10" class="task"/><circle cx="15" cy="14" r="3" class="blue"/><text x="26" y="18" class="label" font-size="9">Studio critique</text></g>
+    <g transform="translate(292 141)"><rect width="132" height="40" rx="10" class="task"/><circle cx="15" cy="14" r="3" class="green"/><text x="26" y="18" class="label" font-size="9">Book train</text></g>
+    <g transform="translate(246 193)"><rect width="150" height="40" rx="10" class="task"/><circle cx="15" cy="14" r="3" class="purple"/><text x="26" y="18" class="label" font-size="9">Essay references</text></g>
+    <circle cx="148" cy="159" r="14" fill="url(#ember)" opacity=".72"/>
+    <text x="166" y="57" class="body" font-size="11">navigation fades up behind moving objects</text>
+  </g>
+
+  <!-- Frame 5 -->
+  <g transform="translate(640 524)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">590–780 MS / RESOLVE TO ROWS</text>
+    <rect x="36" y="56" width="96" height="208" rx="14" fill="#131925" stroke="#2a3343"/>
+    <rect x="48" y="82" width="72" height="26" rx="8" fill="#c45d32" fill-opacity=".18"/>
+    <text x="150" y="72" class="label" font-size="18" font-weight="600">Today</text>
+    <g transform="translate(150 91)"><circle cx="10" cy="20" r="7" fill="none" stroke="#59657a"/><text x="31" y="18" class="label" font-size="11">Essay references</text><text x="31" y="34" class="meta" font-size="6">WRITING · 25 MIN</text><line x1="0" y1="50" x2="330" y2="50" class="line"/></g>
+    <g transform="translate(150 148)"><circle cx="10" cy="20" r="7" fill="none" stroke="#59657a"/><text x="31" y="18" class="label" font-size="11">Studio critique</text><text x="31" y="34" class="meta" font-size="6">COURSEWORK · 40 MIN</text><line x1="0" y1="50" x2="330" y2="50" class="line"/></g>
+    <g transform="translate(150 205)"><circle cx="10" cy="20" r="7" fill="none" stroke="#59657a"/><text x="31" y="18" class="label" font-size="11">Book train</text><text x="31" y="34" class="meta" font-size="6">PERSONAL · 5 MIN</text></g>
+    <circle cx="116" cy="229" r="7" fill="#c45d32" opacity=".65"/>
+    <text x="24" y="278" class="body" font-size="10">Cards shed glass after landing; project color survives as metadata.</text>
+  </g>
+
+  <!-- Frame 6 -->
+  <g transform="translate(1222 524)">
+    <rect width="520" height="286" rx="22" class="frame"/>
+    <text x="24" y="34" class="meta" font-size="9">780–900 MS / SETTLED OPERATE VIEW</text>
+    <rect x="36" y="56" width="96" height="208" rx="14" fill="#131925" stroke="#2a3343"/>
+    <rect x="48" y="82" width="72" height="26" rx="8" fill="#c45d32" fill-opacity=".18"/><text x="62" y="99" class="label" font-size="8">Today</text>
+    <text x="150" y="72" class="label" font-size="18" font-weight="600">Today</text><text x="150" y="88" class="body" font-size="8">Three deliberate things.</text>
+    <g transform="translate(150 101)"><circle cx="10" cy="18" r="7" fill="none" stroke="#c45d32"/><text x="31" y="17" class="label" font-size="11">Essay references</text><circle cx="318" cy="16" r="3" class="purple"/><line x1="0" y1="43" x2="330" y2="43" class="line"/></g>
+    <g transform="translate(150 151)"><circle cx="10" cy="18" r="7" fill="none" stroke="#59657a"/><text x="31" y="17" class="label" font-size="11">Studio critique</text><circle cx="318" cy="16" r="3" class="blue"/><line x1="0" y1="43" x2="330" y2="43" class="line"/></g>
+    <g transform="translate(150 201)"><circle cx="10" cy="18" r="7" fill="none" stroke="#59657a"/><text x="31" y="17" class="label" font-size="11">Book train</text><circle cx="318" cy="16" r="3" class="green"/></g>
+    <text x="24" y="278" class="body" font-size="10">Focus enters the first actionable row only after all geometry settles.</text>
+  </g>
+
+  <!-- timing guidance -->
+  <line x1="58" y1="858" x2="1742" y2="858" class="line"/>
+  <text x="58" y="894" class="meta">TIMING MODEL</text>
+  <line x1="200" y1="890" x2="1115" y2="890" stroke="#343d50" stroke-width="6" stroke-linecap="round"/>
+  <line x1="200" y1="890" x2="322" y2="890" stroke="#d3764d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="322" y1="890" x2="566" y2="890" stroke="#b96846" stroke-width="6"/>
+  <line x1="566" y1="890" x2="800" y2="890" stroke="#8a6255" stroke-width="6"/>
+  <line x1="800" y1="890" x2="993" y2="890" stroke="#687389" stroke-width="6"/>
+  <line x1="993" y1="890" x2="1115" y2="890" stroke="#506175" stroke-width="6" stroke-linecap="round"/>
+  <g class="meta" font-size="8"><text x="196" y="915">0</text><text x="310" y="915">120</text><text x="552" y="915">360</text><text x="786" y="915">590</text><text x="979" y="915">780</text><text x="1095" y="915">900 MS</text></g>
+  <text x="1180" y="884" class="meta">EASING</text><text x="1180" y="908" class="body" font-size="12">outbound: cubic-bezier(.22,.8,.3,1)</text><text x="1180" y="928" class="body" font-size="12">landing: cubic-bezier(.2,.7,.2,1)</text>
+  <text x="1490" y="884" class="meta">REDUCED MOTION</text><text x="1490" y="908" class="body" font-size="12">180 ms crossfade + direct reflow.</text><text x="1490" y="928" class="body" font-size="12">No orbit, scaling pulse, or trails.</text>
+  <text x="58" y="958" class="body" font-size="12">Invariant: stable IDs and task data do not change during the transition. Motion communicates reorganisation, not processing.</text>
+</svg>
