@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+
+# Local app and vault data must never be committed
+*.db
+*.db-shm
+*.db-wal
+Productivity Log/
 
 # Editor directories and files
 .vscode/*
