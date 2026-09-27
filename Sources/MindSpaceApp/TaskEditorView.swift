@@ -49,6 +49,9 @@ struct TaskEditorView: View {
                         .textSelection(.enabled)
                 }
                 Spacer()
+                Button(existingTask == nil ? "Cancel" : "Close") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityIdentifier("cancelTaskEditorButton")
                 Button("Done") { saveAndDismiss() }
                     .buttonStyle(.borderedProminent)
                     .tint(Color(red: 0.70, green: 0.29, blue: 0.13))
@@ -145,9 +148,9 @@ struct TaskEditorView: View {
             task.category = cleanCategory.isEmpty ? nil : cleanCategory
             task.energy = form.energy.isEmpty ? nil : form.energy
             task.isToday = form.isToday
-            model.updateTask(task)
+            if model.updateTask(task) { dismiss() }
         } else {
-            model.createTask(
+            let saved = model.createTask(
                 title: cleanTitle,
                 notes: cleanNotes.isEmpty ? nil : cleanNotes,
                 projectID: form.projectID,
@@ -156,7 +159,7 @@ struct TaskEditorView: View {
                 energy: form.energy.isEmpty ? nil : form.energy,
                 isToday: form.isToday
             )
+            if saved { dismiss() }
         }
-        dismiss()
     }
 }

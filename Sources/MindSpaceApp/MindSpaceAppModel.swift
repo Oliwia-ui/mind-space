@@ -42,6 +42,7 @@ final class MindSpaceAppModel: ObservableObject {
     @Published var selectedTask: MindSpaceTask?
     @Published var selectedProjectID: String?
     @Published var editingProject: MindSpaceProject?
+    @Published private(set) var undoableTask: MindSpaceTask?
     @Published var isPresentingNewTask = false
     @Published var isCreatingProject = false
     @Published var isNamingGalaxy = false
@@ -109,6 +110,7 @@ final class MindSpaceAppModel: ObservableObject {
         mode = .mindSpace
     }
 
+    @discardableResult
     func createTask(
         title: String,
         notes: String?,
@@ -117,7 +119,7 @@ final class MindSpaceAppModel: ObservableObject {
         category: String?,
         energy: String?,
         isToday: Bool
-    ) {
+    ) -> Bool {
         perform {
             let result = try service().createTask(
                 title: title,
@@ -129,10 +131,25 @@ final class MindSpaceAppModel: ObservableObject {
                 isToday: isToday
             )
             showLoggingIssue(result.loggingIssue)
+            undoableTask = result.task
         }
     }
 
-    func updateTask(_ task: MindSpaceTask) {
+    func undoTaskCreation() {
+        guard let task = undoableTask else { return }
+        undoableTask = nil
+        perform {
+            let result = try service().deleteTask(id: task.id)
+            showLoggingIssue(result.loggingIssue)
+        }
+    }
+
+    func dismissUndo() {
+        undoableTask = nil
+    }
+
+    @discardableResult
+    func updateTask(_ task: MindSpaceTask) -> Bool {
         perform {
             let result = try service().updateTask(task)
             selectedTask = result.task

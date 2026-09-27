@@ -13,7 +13,13 @@ struct MindSpaceRootView: View {
                 StructuredTaskView(model: model)
                     .transition(.opacity.combined(with: .scale(scale: 0.985)))
             }
+
+            if let task = model.undoableTask {
+                UndoBanner(title: task.title, undo: model.undoTaskCreation, dismiss: model.dismissUndo)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.easeOut(duration: 0.2), value: model.undoableTask?.id)
         .animation(
             model.preferences.reducedMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.9),
             value: model.mode
@@ -42,6 +48,41 @@ struct MindSpaceRootView: View {
             get: { model.errorMessage != nil },
             set: { if !$0 { model.errorMessage = nil } }
         )
+    }
+}
+
+private struct UndoBanner: View {
+    let title: String
+    let undo: () -> Void
+    let dismiss: () -> Void
+
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 14) {
+                Text("Saved “\(title)”")
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.88))
+                    .lineLimit(1)
+                Button("Undo", action: undo)
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.orange.opacity(0.9))
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.45))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss undo")
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .glassPanel(cornerRadius: 14)
+            .padding(.bottom, 26)
+        }
+        .allowsHitTesting(true)
     }
 }
 
