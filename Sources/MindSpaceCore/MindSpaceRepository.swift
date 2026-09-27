@@ -263,11 +263,54 @@ public final class MindSpaceRepository: @unchecked Sendable {
         }
     }
 
+    public func enqueueLogEvent(_ event: TaskLogEvent) throws {
+        let payload = try String(decoding: JSONEncoder().encode(event), as: UTF8.self)
+        try transaction {
+            let statement = try prepare("INSERT OR REPLACE INTO pending_task_log_events (event_id, payload, created_at) VALUES (?, ?, ?)")
+            defer { sqlite3_finalize(statement) }
+            try bind(event.eventID, to: statement, at: 1)
+            try bind(payload, to: statement, at: 2)
+            sqlite3_bind_double(statement, 3, event.timestamp.timeIntervalSince1970)
+            try stepDone(statement)
+        }
+    }
+
+    public func pendingLogEvents() throws -> [TaskLogEvent] {
+        try lock.withLock {
+            let statement = try prepare("SELECT payload FROM pending_task_log_events ORDER BY created_at, event_id")
+            defer { sqlite3_finalize(statement) }
+            var events: [TaskLogEvent] = []
+            var step = sqlite3_step(statement)
+            while step == SQLITE_ROW {
+                guard let payload = text(statement, 0), let data = payload.data(using: .utf8) else {
+                    throw MindSpaceRepositoryError.corruptStoredValue(field: "pending_task_log_events.payload", value: "NULL")
+                }
+                do {
+                    events.append(try JSONDecoder().decode(TaskLogEvent.self, from: data))
+                } catch {
+                    throw MindSpaceRepositoryError.corruptStoredValue(field: "pending_task_log_events.payload", value: payload)
+                }
+                step = sqlite3_step(statement)
+            }
+            guard step == SQLITE_DONE else { throw dbError() }
+            return events
+        }
+    }
+
+    public func removePendingLogEvent(eventID: String) throws {
+        try transaction {
+            let statement = try prepare("DELETE FROM pending_task_log_events WHERE event_id = ?")
+            defer { sqlite3_finalize(statement) }
+            try bind(eventID, to: statement, at: 1)
+            try stepDone(statement)
+        }
+    }
+
     private var taskColumns: String { "id,title,notes,status,project_id,due_date,category,energy,created_at,updated_at,completed_at,trashed_at,is_today,estimated_focus_minutes,external_session_references,previous_status" }
 
     private func migrate() throws {
-        let version = try scalarInt("PRAGMA user_version")
-        guard version <= 1 else { throw MindSpaceRepositoryError.databaseFailure(code: SQLITE_ERROR, message: "Database schema version \(version) is newer than supported version 1") }
+        var version = try scalarInt("PRAGMA user_version")
+        guard version <= 2 else { throw MindSpaceRepositoryError.databaseFailure(code: SQLITE_ERROR, message: "Database schema version \(version) is newer than supported version 2") }
         if version == 0 {
             try transaction {
                 try execute("CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, color_token TEXT NOT NULL, created_at REAL NOT NULL, updated_at REAL NOT NULL, is_archived INTEGER NOT NULL DEFAULT 0, archived_at REAL)")
@@ -277,6 +320,13 @@ public final class MindSpaceRepository: @unchecked Sendable {
                 try execute("CREATE TABLE preferences (singleton INTEGER PRIMARY KEY CHECK(singleton=1), reduced_motion INTEGER NOT NULL DEFAULT 0, vault_bookmark BLOB, vault_path TEXT)")
                 try execute("INSERT INTO preferences(singleton) VALUES (1)")
                 try execute("PRAGMA user_version = 1")
+            }
+            version = 1
+        }
+        if version == 1 {
+            try transaction {
+                try execute("CREATE TABLE pending_task_log_events (event_id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at REAL NOT NULL)")
+                try execute("PRAGMA user_version = 2")
             }
         }
     }

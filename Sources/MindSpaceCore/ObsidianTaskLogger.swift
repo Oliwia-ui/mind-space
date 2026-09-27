@@ -1,6 +1,6 @@
 import Foundation
 
-public enum TaskLogEventType: String, Sendable {
+public enum TaskLogEventType: String, Codable, Sendable {
     case created = "task_created"
     case edited = "task_edited"
     case completed = "task_completed"
@@ -8,7 +8,8 @@ public enum TaskLogEventType: String, Sendable {
     case deleted = "task_deleted"
 }
 
-public struct TaskLogEvent: Sendable {
+public struct TaskLogEvent: Codable, Equatable, Sendable {
+    public let eventID: String
     public let timestamp: Date
     public let type: TaskLogEventType
     public let task: MindSpaceTask
@@ -16,12 +17,14 @@ public struct TaskLogEvent: Sendable {
     public let changedFields: [String: String]
 
     public init(
+        eventID: String = "event_\(UUID().uuidString)",
         timestamp: Date,
         type: TaskLogEventType,
         task: MindSpaceTask,
         projectName: String? = nil,
         changedFields: [String: String] = [:]
     ) {
+        self.eventID = eventID
         self.timestamp = timestamp
         self.type = type
         self.task = task
@@ -30,20 +33,25 @@ public struct TaskLogEvent: Sendable {
     }
 }
 
-public final class ObsidianTaskLogger: @unchecked Sendable {
+public protocol TaskEventLogging: Sendable {
+    @discardableResult
+    func append(_ event: TaskLogEvent) throws -> URL
+}
+
+public final class ObsidianTaskLogger: TaskEventLogging, @unchecked Sendable {
     private let vaultURL: URL
     private let timeZone: TimeZone
-    private let eventID: @Sendable () -> String
+    private let eventIDOverride: (@Sendable () -> String)?
     private let lock = NSLock()
 
     public init(
         vaultURL: URL,
         timeZone: TimeZone = .current,
-        eventID: @escaping @Sendable () -> String = { "event_\(UUID().uuidString)" }
+        eventID: (@Sendable () -> String)? = nil
     ) {
         self.vaultURL = vaultURL
         self.timeZone = timeZone
-        self.eventID = eventID
+        self.eventIDOverride = eventID
     }
 
     @discardableResult
@@ -81,7 +89,7 @@ public final class ObsidianTaskLogger: @unchecked Sendable {
         let time = formatted(event.timestamp, format: "HH:mm:ss")
         var lines = [
             "- \(time) \(timeZone.identifier) | \(event.type.rawValue)",
-            "  - event_id: \(sanitized(eventID()))",
+            "  - event_id: \(sanitized(eventIDOverride?() ?? event.eventID))",
             "  - id: \(sanitized(event.task.id))",
             "  - title: “\(sanitized(event.task.title))”",
         ]
