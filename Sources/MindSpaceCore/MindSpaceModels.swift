@@ -7,7 +7,7 @@ public enum TaskStatus: String, Codable, CaseIterable, Sendable {
     case trashed
 }
 
-public struct MindSpaceTask: Equatable, Codable, Sendable {
+public struct MindSpaceTask: Identifiable, Equatable, Codable, Sendable {
     public let id: String
     public var title: String
     public var notes: String?
@@ -62,7 +62,7 @@ public struct MindSpaceTask: Equatable, Codable, Sendable {
     }
 }
 
-public struct MindSpaceProject: Equatable, Codable, Sendable {
+public struct MindSpaceProject: Identifiable, Equatable, Codable, Sendable {
     public let id: String
     public var name: String
     public var colorToken: String
