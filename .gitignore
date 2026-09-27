@@ -1,24 +1,24 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Swift
+.build/
+.swiftpm/
+Package.resolved
 
-node_modules
-dist
-dist-ssr
-*.local
+# App output and local data
+dist/
+*.store
+*.store-shm
+*.store-wal
+Productivity Log/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Xcode and macOS
+DerivedData/
+Packages/
+*.xcuserstate
+xcuserdata/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.netrc

@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Mind Space composition and direction board</title>
+  <desc id="desc">A visual design board defining the spatial task canvas, object language, palette, typography, and hierarchy for Mind Space.</desc>
+  <defs>
+    <radialGradient id="canvas" cx="52%" cy="45%" r="72%">
+      <stop offset="0" stop-color="#172039"/>
+      <stop offset="0.45" stop-color="#0c1120"/>
+      <stop offset="1" stop-color="#060810"/>
+    </radialGradient>
+    <radialGradient id="core" cx="34%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#f5c09c"/>
+      <stop offset="0.22" stop-color="#d87943"/>
+      <stop offset="0.72" stop-color="#9f4525"/>
+      <stop offset="1" stop-color="#672717"/>
+    </radialGradient>
+    <linearGradient id="taskGlass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#cbd5ed" stop-opacity=".19"/>
+      <stop offset="1" stop-color="#63708d" stop-opacity=".07"/>
+    </linearGradient>
+    <linearGradient id="projectGlass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#b0a5db" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#524f7e" stop-opacity=".16"/>
+    </linearGradient>
+    <linearGradient id="capture" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#1c2333" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#111726" stop-opacity=".86"/>
+    </linearGradient>
+    <filter id="shadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <pattern id="stars" width="106" height="88" patternUnits="userSpaceOnUse">
+      <circle cx="13" cy="17" r="1" fill="#e7edf8" opacity=".42"/>
+      <circle cx="70" cy="54" r=".75" fill="#91a8d1" opacity=".35"/>
+      <circle cx="97" cy="12" r=".55" fill="#ffffff" opacity=".24"/>
+    </pattern>
+    <style>
+      .label{font-family:"Avenir Next","SF Pro Display",sans-serif;fill:#f2ede4}.meta{font-family:"SFMono-Regular",Menlo,monospace;fill:#8e98ab;font-size:13px;letter-spacing:1.4px}.body{font-family:"Avenir Next","SF Pro Text",sans-serif;fill:#aab2c1;font-size:16px}.fine{stroke:#76819a;stroke-width:1;stroke-dasharray:4 6;fill:none}.note{fill:#0d1220;stroke:#293146;stroke-width:1}.number{fill:#c86334}.numberText{font-family:"SFMono-Regular",Menlo,monospace;fill:#fff7ee;font-size:13px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#080b12"/>
+  <text x="64" y="70" class="meta">REFERENCE 01 / COMPOSITION + DIRECTION</text>
+  <text x="64" y="116" class="label" font-size="38" font-weight="600" letter-spacing="-1.2">A room for unfinished thoughts</text>
+  <text x="64" y="148" class="body">Explore first: saved work is encountered spatially before it is administered.</text>
+
+  <rect x="54" y="188" width="1070" height="748" rx="28" fill="url(#canvas)" stroke="#252d40"/>
+  <rect x="54" y="188" width="1070" height="748" rx="28" fill="url(#stars)" opacity=".55"/>
+
+  <!-- Product canvas -->
+  <text x="96" y="236" class="meta" font-size="11">YOUR THOUGHTS, STILL IN MOTION</text>
+  <text x="96" y="276" class="label" font-size="30" font-weight="560" letter-spacing="-1">Mind Space</text>
+
+  <ellipse cx="600" cy="556" rx="356" ry="152" fill="none" stroke="#9aa8c6" stroke-opacity=".12"/>
+  <ellipse cx="602" cy="557" rx="242" ry="250" transform="rotate(62 602 557)" fill="none" stroke="#9aa8c6" stroke-opacity=".1"/>
+  <path d="M270 490 C430 337 766 321 951 466" fill="none" stroke="#7a89aa" stroke-opacity=".08" stroke-width="34" filter="url(#soft)"/>
+
+  <!-- central action -->
+  <circle cx="611" cy="570" r="112" fill="#b8552c" opacity=".22" filter="url(#shadow)"/>
+  <circle cx="611" cy="570" r="82" fill="url(#core)" stroke="#f1b68e" stroke-opacity=".38"/>
+  <circle cx="589" cy="545" r="28" fill="#ffe0c8" opacity=".12" filter="url(#soft)"/>
+  <text x="611" y="559" class="label" font-size="12" font-weight="600" text-anchor="middle" letter-spacing="2.2">MAKE IT</text>
+  <text x="611" y="579" class="label" font-size="14" font-weight="750" text-anchor="middle" letter-spacing="1.4">MAKE SENSE</text>
+  <text x="611" y="604" class="meta" font-size="9" text-anchor="middle">9 OPEN THREADS</text>
+
+  <!-- floating task cards -->
+  <g transform="translate(250 345) rotate(-5)">
+    <rect width="232" height="86" rx="18" fill="url(#taskGlass)" stroke="#b6c3dd" stroke-opacity=".28"/>
+    <circle cx="24" cy="26" r="5" fill="#7d94c6"/>
+    <text x="40" y="31" class="label" font-size="15" font-weight="560">Outline studio critique</text>
+    <text x="22" y="59" class="meta" font-size="10">COURSEWORK · INBOX</text>
+  </g>
+  <g transform="translate(776 360) rotate(4)">
+    <rect width="220" height="82" rx="18" fill="url(#taskGlass)" stroke="#aeb9d0" stroke-opacity=".24"/>
+    <circle cx="24" cy="25" r="5" fill="#67957f"/>
+    <text x="40" y="30" class="label" font-size="15" font-weight="560">Book train home</text>
+    <text x="22" y="57" class="meta" font-size="10">PERSONAL · INBOX</text>
+  </g>
+  <g transform="translate(803 680) rotate(-3)">
+    <rect width="250" height="88" rx="18" fill="url(#taskGlass)" stroke="#b6c3dd" stroke-opacity=".24"/>
+    <circle cx="24" cy="27" r="5" fill="#b67d52"/>
+    <text x="40" y="32" class="label" font-size="15" font-weight="560">Fix references in essay</text>
+    <text x="22" y="61" class="meta" font-size="10">WRITING · TODAY?</text>
+  </g>
+
+  <!-- project cube -->
+  <g transform="translate(287 675)">
+    <path d="M0 30 L48 4 L96 29 L49 57 Z" fill="#a99ed2" fill-opacity=".32" stroke="#c7bee8" stroke-opacity=".32"/>
+    <path d="M0 30 L49 57 L49 111 L0 82 Z" fill="#605b91" fill-opacity=".38" stroke="#a59dcc" stroke-opacity=".25"/>
+    <path d="M49 57 L96 29 L96 81 L49 111 Z" fill="url(#projectGlass)" stroke="#a59dcc" stroke-opacity=".25"/>
+    <text x="48" y="137" class="meta" font-size="10" text-anchor="middle">PROJECT / THESIS</text>
+  </g>
+
+  <!-- idea spheres -->
+  <g>
+    <circle cx="930" cy="522" r="30" fill="#708ab6" opacity=".18" filter="url(#soft)"/>
+    <circle cx="930" cy="522" r="21" fill="#6483b4" fill-opacity=".44" stroke="#aac1e7" stroke-opacity=".3"/>
+    <circle cx="923" cy="515" r="6" fill="#dce9ff" opacity=".18"/>
+    <text x="930" y="562" class="meta" font-size="9" text-anchor="middle">IDEA</text>
+  </g>
+  <g>
+    <circle cx="455" cy="752" r="24" fill="#638b78" fill-opacity=".35" stroke="#a7cbb8" stroke-opacity=".3"/>
+    <circle cx="448" cy="745" r="6" fill="#e0fff0" opacity=".12"/>
+  </g>
+
+  <!-- capture -->
+  <rect x="286" y="852" width="646" height="54" rx="27" fill="url(#capture)" stroke="#343d52"/>
+  <circle cx="317" cy="879" r="12" fill="#c35c31"/>
+  <path d="M312 879h10M317 874v10" stroke="#fff4eb" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="342" y="884" class="body" font-size="15" fill="#8e98aa">Capture what is circling…</text>
+  <text x="894" y="884" class="meta" font-size="10" text-anchor="end">⌘ RETURN</text>
+
+  <!-- callouts -->
+  <path class="fine" d="M190 312 L260 356"/>
+  <circle cx="173" cy="301" r="14" class="number"/><text x="173" y="302" class="numberText">1</text>
+  <path class="fine" d="M1080 493 L955 517"/>
+  <circle cx="1094" cy="490" r="14" class="number"/><text x="1094" y="491" class="numberText">2</text>
+  <path class="fine" d="M1090 603 L696 578"/>
+  <circle cx="1104" cy="604" r="14" class="number"/><text x="1104" y="605" class="numberText">3</text>
+  <path class="fine" d="M179 820 L286 865"/>
+  <circle cx="164" cy="814" r="14" class="number"/><text x="164" y="815" class="numberText">4</text>
+
+  <!-- direction column -->
+  <text x="1180" y="218" class="meta">COMPOSITION RULES</text>
+  <g transform="translate(1178 246)">
+    <circle cx="14" cy="14" r="14" class="number"/><text x="14" y="15" class="numberText">1</text>
+    <text x="42" y="11" class="label" font-size="16" font-weight="600">Asymmetric field</text>
+    <text x="42" y="34" class="body" font-size="13">Objects keep breathing room;</text><text x="42" y="52" class="body" font-size="13">no dashboard grid.</text>
+  </g>
+  <g transform="translate(1178 326)">
+    <circle cx="14" cy="14" r="14" class="number"/><text x="14" y="15" class="numberText">2</text>
+    <text x="42" y="11" class="label" font-size="16" font-weight="600">Meaning by form</text>
+    <text x="42" y="34" class="body" font-size="13">Cards = tasks, cubes = projects,</text><text x="42" y="52" class="body" font-size="13">spheres = unformed ideas.</text>
+  </g>
+  <g transform="translate(1178 406)">
+    <circle cx="14" cy="14" r="14" class="number"/><text x="14" y="15" class="numberText">3</text>
+    <text x="42" y="11" class="label" font-size="16" font-weight="600">One warm gravity well</text>
+    <text x="42" y="34" class="body" font-size="13">Orange belongs to the organising</text><text x="42" y="52" class="body" font-size="13">action and selected state.</text>
+  </g>
+  <g transform="translate(1178 486)">
+    <circle cx="14" cy="14" r="14" class="number"/><text x="14" y="15" class="numberText">4</text>
+    <text x="42" y="11" class="label" font-size="16" font-weight="600">Capture stays peripheral</text>
+    <text x="42" y="34" class="body" font-size="13">Always available, never mistaken</text><text x="42" y="52" class="body" font-size="13">for the main composition.</text>
+  </g>
+
+  <line x1="1180" y1="568" x2="1536" y2="568" stroke="#252c3c"/>
+  <text x="1180" y="608" class="meta">COLOR POSTURE</text>
+  <g transform="translate(1180 632)">
+    <rect width="56" height="56" rx="12" fill="#080b12" stroke="#30384b"/><text x="0" y="78" class="meta" font-size="9">GRAPHITE</text>
+    <rect x="72" width="56" height="56" rx="12" fill="#111829"/><text x="72" y="78" class="meta" font-size="9">NAVY</text>
+    <rect x="144" width="56" height="56" rx="12" fill="#f2ede4"/><text x="144" y="78" class="meta" font-size="9">PAPER</text>
+    <rect x="216" width="56" height="56" rx="12" fill="#c45d32"/><text x="216" y="78" class="meta" font-size="9">EMBER</text>
+    <rect x="288" width="56" height="56" rx="12" fill="#7189b7"/><text x="288" y="78" class="meta" font-size="9">ORBIT</text>
+  </g>
+
+  <text x="1180" y="752" class="meta">MOTION POSTURE</text>
+  <rect x="1180" y="772" width="356" height="82" rx="16" class="note"/>
+  <path d="M1204 823 C1250 789 1285 837 1332 807 S1410 830 1502 792" fill="none" stroke="#7189b7" stroke-width="2"/>
+  <circle cx="1502" cy="792" r="5" fill="#c45d32"/>
+  <text x="1204" y="801" class="body" font-size="12">slow drift / low amplitude / continuity over spectacle</text>
+  <text x="1180" y="895" class="meta">TYPE + TEXTURE</text>
+  <text x="1180" y="925" class="label" font-size="22" font-weight="560">Quiet, precise, human.</text>
+  <text x="1180" y="950" class="body" font-size="13">Soft glass only where objects overlap space.</text>
+</svg>
