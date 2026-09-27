@@ -26,6 +26,22 @@ public struct ThoughtDriftField: Sendable {
         )
     }
 
+    /// The far end of a thought's hovering travel.
+    ///
+    /// Paired with `hoverDuration`, this drives an autoreversing animation, which lets the
+    /// render server do the work instead of re-evaluating the canvas on every frame.
+    public func hoverTarget(forID id: String) -> ThoughtPoint {
+        let angle = phase(forID: id)
+        let travel = amplitude * 0.5 + amplitude * 0.5 * Double((hash(forID: id) % 100)) / 100
+        return ThoughtPoint(x: travel * cos(angle), y: travel * sin(angle))
+    }
+
+    /// How long one hover sweep takes, so no two thoughts breathe in lockstep.
+    public func hoverDuration(forID id: String) -> Double {
+        let spread = Double((hash(forID: id) >> 13) % 100) / 100
+        return hoverPeriod * 0.6 + hoverPeriod * 0.8 * spread
+    }
+
     /// The resting point of a task orbiting the project it belongs to.
     public func orbitPoint(
         around center: ThoughtPoint,
@@ -45,9 +61,19 @@ public struct ThoughtDriftField: Sendable {
 
     /// Stable per-thought phase so each object drifts on its own rhythm.
     private func phase(forID id: String) -> Double {
-        let hash = id.unicodeScalars.reduce(into: UInt64(7)) { result, scalar in
+        Double(hash(forID: id) % 6_283) / 1_000
+    }
+
+    private func hash(forID id: String) -> UInt64 {
+        var value = id.unicodeScalars.reduce(into: UInt64(7)) { result, scalar in
             result = result &* 31 &+ UInt64(scalar.value)
         }
-        return Double(hash % 6_283) / 1_000
+        // Avalanche the digest so ids that differ by one character land far apart.
+        value ^= value >> 33
+        value = value &* 0xff51_afd7_ed55_8ccd
+        value ^= value >> 33
+        value = value &* 0xc4ce_b9fe_1a85_ec53
+        value ^= value >> 33
+        return value
     }
 }

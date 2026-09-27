@@ -36,6 +36,25 @@ func driftMovesOverTime() {
     #expect(start != later)
 }
 
+@Test("every thought gets a visible hover travel and its own rhythm")
+func hoverTargetAlwaysMovesEachThought() {
+    let field = ThoughtDriftField(amplitude: 6)
+
+    for id in ["task_a", "task_b", "project_c", "idea_d"] {
+        let target = field.hoverTarget(forID: id)
+        let travel = hypot(target.x, target.y)
+        #expect(travel >= 2)
+        #expect(travel <= 6.001)
+
+        let duration = field.hoverDuration(forID: id)
+        #expect(duration >= 6)
+        #expect(duration <= 16)
+    }
+
+    #expect(field.hoverTarget(forID: "task_a") != field.hoverTarget(forID: "task_b"))
+    #expect(field.hoverDuration(forID: "task_a") != field.hoverDuration(forID: "task_b"))
+}
+
 @Test("orbiting tasks stay evenly spread around their project")
 func orbitSpreadsTasksAroundProject() {
     let field = ThoughtDriftField(amplitude: 6)

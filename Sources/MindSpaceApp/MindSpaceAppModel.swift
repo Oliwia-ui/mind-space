@@ -43,6 +43,7 @@ final class MindSpaceAppModel: ObservableObject {
     @Published var selectedProjectID: String?
     @Published var editingProject: MindSpaceProject?
     @Published private(set) var undoableTask: MindSpaceTask?
+    @Published private(set) var isDrifting = false
     @Published var isPresentingNewTask = false
     @Published var isCreatingProject = false
     @Published var isNamingGalaxy = false
@@ -108,6 +109,12 @@ final class MindSpaceAppModel: ObservableObject {
 
     func returnToMindSpace() {
         mode = .mindSpace
+    }
+
+    /// Starts the ambient hover once the canvas is on screen. It never changes saved data.
+    func startDrifting() {
+        guard !isDrifting else { return }
+        isDrifting = true
     }
 
     @discardableResult
