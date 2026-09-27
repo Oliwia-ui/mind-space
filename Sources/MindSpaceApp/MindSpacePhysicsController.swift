@@ -175,15 +175,19 @@ final class MindSpacePhysicsController: ObservableObject {
 
         groupingHoldTask?.cancel()
         groupingHoldTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(720))
-            guard let self,
-                  !Task.isCancelled,
-                  self.draggedObjectID == draggedID else { return }
-            self.groupingPreview = self.groupingEngine.update(
-                draggedID: draggedID,
-                bodies: self.bodies,
-                at: Date()
-            )
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(60))
+                guard let self,
+                      !Task.isCancelled,
+                      self.draggedObjectID == draggedID else { return }
+                let refreshed = self.groupingEngine.update(
+                    draggedID: draggedID,
+                    bodies: self.bodies,
+                    at: Date()
+                )
+                self.groupingPreview = refreshed
+                if refreshed == nil { return }
+            }
         }
     }
 
