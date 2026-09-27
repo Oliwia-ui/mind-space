@@ -4,6 +4,7 @@ import SwiftUI
 struct MindSpaceCanvasView: View {
     @ObservedObject var model: MindSpaceAppModel
     @ObservedObject private var physics: MindSpacePhysicsController
+    private let driftField = ThoughtDriftField()
 
     init(model: MindSpaceAppModel) {
         self.model = model
@@ -24,6 +25,12 @@ struct MindSpaceCanvasView: View {
     }
 
     var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: model.preferences.reducedMotion)) { timeline in
+            canvas(driftTime: timeline.date.timeIntervalSinceReferenceDate)
+        }
+    }
+
+    private func canvas(driftTime: Double) -> some View {
         GeometryReader { geometry in
             let defaults = defaultBodies(in: geometry.size)
             let kinds = objectKinds
@@ -31,7 +38,7 @@ struct MindSpaceCanvasView: View {
 
             ZStack {
                 orbitalGuides(in: geometry.size)
-                galaxyConnections(in: geometry.size)
+                galaxyConnections(in: geometry.size, at: driftTime)
 
                 VStack(spacing: 8) {
                     Text("MIND SPACE")
@@ -67,7 +74,7 @@ struct MindSpaceCanvasView: View {
                             color: objectGlow(for: task.id),
                             radius: isGroupingHighlighted(task.id) ? 28 : (physics.contactIDs.contains(task.id) ? 19 : 0)
                         )
-                        .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
+                        .position(model.isTransforming ? centerPoint(in: geometry.size) : drifted(center, id: task.id, at: driftTime))
                         .rotationEffect(.degrees(model.isTransforming ? Double(index * 22) : 0))
                         .scaleEffect(model.isTransforming ? 0.42 : 1)
                         .opacity(model.isTransforming ? 0.15 : 1)
@@ -92,7 +99,7 @@ struct MindSpaceCanvasView: View {
                         color: objectGlow(for: project.id),
                         radius: isGroupingHighlighted(project.id) ? 28 : (physics.contactIDs.contains(project.id) ? 19 : 0)
                     )
-                    .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
+                    .position(model.isTransforming ? centerPoint(in: geometry.size) : drifted(center, id: project.id, at: driftTime))
                     .rotation3DEffect(.degrees(model.isTransforming ? 70 : -8), axis: (x: 0.7, y: 1, z: 0.2))
                     .scaleEffect(model.isTransforming ? 0.35 : 1)
                     .opacity(model.isTransforming ? 0.12 : 1)
@@ -232,11 +239,11 @@ struct MindSpaceCanvasView: View {
             }
     }
 
-    private func galaxyConnections(in size: CGSize) -> some View {
+    private func galaxyConnections(in size: CGSize, at driftTime: Double) -> some View {
         Canvas { context, _ in
             let centers = Dictionary(
                 uniqueKeysWithValues: physics.bodies.map {
-                    ($0.id, CGPoint(x: $0.center.x, y: $0.center.y))
+                    ($0.id, drifted($0.center, id: $0.id, at: driftTime))
                 }
             )
 
@@ -380,6 +387,15 @@ struct MindSpaceCanvasView: View {
 
     private func point(_ point: ThoughtPoint) -> CGPoint {
         CGPoint(x: point.x, y: point.y)
+    }
+
+    /// Adds calm ambient hovering without ever changing the saved position.
+    private func drifted(_ center: ThoughtPoint, id: String, at time: Double) -> CGPoint {
+        guard !model.preferences.reducedMotion, physics.draggedObjectID != id else {
+            return point(center)
+        }
+        let offset = driftField.hoverOffset(forID: id, at: time)
+        return CGPoint(x: center.x + offset.x, y: center.y + offset.y)
     }
 
     private var physicsErrorBinding: Binding<Bool> {
