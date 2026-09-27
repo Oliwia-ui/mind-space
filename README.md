@@ -35,4 +35,33 @@ open "dist/Mind Space.app"
 
 The app target will place `MindSpace.store` in its Application Support directory. Tests use isolated in-memory or temporary on-disk databases and never access a real Obsidian vault.
 
-Native Obsidian integration, the Mind Space canvas, and structured views are implemented incrementally on the feature branch.
+## Obsidian vault activity log
+
+Mind Space can write an append-only task history to an Obsidian vault you select yourself.
+
+1. Press **MAKE IT MAKE SENSE** to open the structured view.
+2. Open **Settings** in the sidebar.
+3. Under **Obsidian Vault**, choose **Choose Vault…**.
+4. Select the root folder of your existing Obsidian vault.
+5. Create, edit, complete, reopen, or move a task to Trash.
+
+Mind Space appends records to:
+
+```text
+Productivity Log/
+  Tasks/
+    YYYY-MM-DD.md
+```
+
+It never replaces previous entries. Each record contains the local date, time, timezone, event type, status, stable task ID, title, project where relevant, and changed values where relevant. If the vault cannot be written, the task action remains saved locally and the pending event can be retried from Settings.
+
+Example:
+
+```md
+## 2026-09-27
+
+- 14:32:18 Europe/Brussels | task_completed
+  - id: task_abc123
+  - title: “Plan assignment report”
+  - status: completed
+```
