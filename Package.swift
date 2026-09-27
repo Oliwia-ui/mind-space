@@ -11,7 +11,8 @@ let package = Package(
     targets: [
         .target(
             name: "MindSpaceCore",
-            path: "Sources/MindSpaceCore"
+            path: "Sources/MindSpaceCore",
+            linkerSettings: [.linkedLibrary("sqlite3")]
         ),
         .executableTarget(
             name: "MindSpaceApp",
