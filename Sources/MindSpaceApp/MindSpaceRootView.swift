@@ -114,6 +114,19 @@ struct CosmicBackground: View {
                     endRadius: 620
                 )
 
+                if let backdrop = NSImage(named: "mind-space-backdrop")
+                    ?? Bundle.module.image(forResource: "mind-space-backdrop") {
+                    Image(nsImage: backdrop)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .opacity(0.55)
+                        .overlay(Color.black.opacity(0.34))
+                        .blendMode(.screen)
+                        .allowsHitTesting(false)
+                }
+
                 ForEach(Array(stars.enumerated()), id: \.offset) { _, star in
                     Circle()
                         .fill(.white.opacity(star.3))

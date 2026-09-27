@@ -132,24 +132,29 @@ struct MindSpaceCanvasView: View {
                     Button(action: transformToStructured) {
                         ZStack {
                             Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: [
-                                            Color(red: 0.92, green: 0.48, blue: 0.24).opacity(0.94),
-                                            Color(red: 0.58, green: 0.19, blue: 0.08).opacity(0.88),
-                                        ],
-                                        center: .topLeading,
-                                        startRadius: 4,
-                                        endRadius: 92
+                                .fill(.ultraThinMaterial.opacity(0.72))
+                                .overlay(
+                                    Circle().fill(
+                                        RadialGradient(
+                                            colors: [
+                                                Color(red: 0.92, green: 0.62, blue: 0.42).opacity(0.22),
+                                                Color(red: 0.30, green: 0.36, blue: 0.68).opacity(0.14),
+                                            ],
+                                            center: .topLeading,
+                                            startRadius: 4,
+                                            endRadius: 132
+                                        )
                                     )
                                 )
-                                .overlay(Circle().stroke(.white.opacity(0.20), lineWidth: 1))
-                                .shadow(color: Color.orange.opacity(0.22), radius: 34)
+                                .overlay(Circle().stroke(.white.opacity(0.26), lineWidth: 1))
+                                .shadow(color: .black.opacity(0.42), radius: 26, y: 10)
+                                .shadow(color: Color.white.opacity(0.10), radius: 32)
                             Text("MAKE IT\nMAKE SENSE")
                                 .multilineTextAlignment(.center)
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .tracking(1.2)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.white.opacity(0.95))
+                                .shadow(color: .black.opacity(0.5), radius: 6)
                         }
                         .frame(width: 142, height: 142)
                     }

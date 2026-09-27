@@ -15,6 +15,12 @@ rm -rf "$BUNDLE"
 mkdir -p "$MACOS" "$RESOURCES"
 cp "$ROOT/.build/release/MindSpace" "$MACOS/MindSpace"
 
+# Ship the SwiftPM resource bundle so Bundle.module finds the backdrop at runtime.
+for RESOURCE_BUNDLE in "$ROOT"/.build/release/*.bundle; do
+  [ -e "$RESOURCE_BUNDLE" ] || continue
+  cp -R "$RESOURCE_BUNDLE" "$RESOURCES/"
+done
+
 cat > "$CONTENTS/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

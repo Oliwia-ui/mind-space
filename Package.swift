@@ -17,7 +17,8 @@ let package = Package(
         .executableTarget(
             name: "MindSpaceApp",
             dependencies: ["MindSpaceCore"],
-            path: "Sources/MindSpaceApp"
+            path: "Sources/MindSpaceApp",
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "MindSpaceCoreTests",
