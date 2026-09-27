@@ -143,3 +143,20 @@ func deletingTaskUsesTrashAndWritesDeletionEvent() throws {
     #expect(logger.events.map(\.type) == [.deleted])
     #expect(try repository.task(id: task.id) != nil)
 }
+
+@Test("restoring a trashed task preserves its identity and writes a restoration event")
+func restoringTaskPreservesIdentityAndWritesRestorationEvent() throws {
+    let instant = Date(timeIntervalSince1970: 1_797_774_138)
+    let repository = try MindSpaceRepository.inMemory(now: { instant })
+    let task = try repository.createTask(title: "Bring back", isToday: true)
+    _ = try repository.trash(taskID: task.id)
+    let logger = RecordingTaskEventLogger()
+    let service = TaskActionService(repository: repository, logger: logger, now: { instant })
+
+    let result = try service.restoreTask(id: task.id)
+
+    #expect(result.task.id == task.id)
+    #expect(result.task.status == .inbox)
+    #expect(result.task.trashedAt == nil)
+    #expect(logger.events.map(\.type) == [.restored])
+}

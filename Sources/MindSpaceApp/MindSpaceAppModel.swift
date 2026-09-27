@@ -14,6 +14,7 @@ final class MindSpaceAppModel: ObservableObject {
         case inbox = "Inbox"
         case projects = "Projects"
         case done = "Done"
+        case trash = "Trash"
         case logbook = "Logbook"
         case settings = "Settings"
 
@@ -25,6 +26,7 @@ final class MindSpaceAppModel: ObservableObject {
             case .inbox: "tray"
             case .projects: "square.stack.3d.up"
             case .done: "checkmark.circle"
+            case .trash: "trash"
             case .logbook: "book.closed"
             case .settings: "gearshape"
             }
@@ -80,6 +82,8 @@ final class MindSpaceAppModel: ObservableObject {
             tasks.filter { $0.status == .active }
         case .done:
             tasks.filter { $0.status == .completed }
+        case .trash:
+            tasks.filter { $0.status == .trashed }
         case .logbook, .settings:
             []
         }
@@ -146,6 +150,14 @@ final class MindSpaceAppModel: ObservableObject {
     func delete(_ task: MindSpaceTask) {
         perform {
             let result = try service().deleteTask(id: task.id)
+            selectedTask = nil
+            showLoggingIssue(result.loggingIssue)
+        }
+    }
+
+    func restore(_ task: MindSpaceTask) {
+        perform {
+            let result = try service().restoreTask(id: task.id)
             selectedTask = nil
             showLoggingIssue(result.loggingIssue)
         }

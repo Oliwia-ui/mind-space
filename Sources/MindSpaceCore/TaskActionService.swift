@@ -155,6 +155,19 @@ public final class TaskActionService: @unchecked Sendable {
         return try log(event)
     }
 
+    public func restoreTask(id: String) throws -> TaskActionResult {
+        let restored = try repository.restore(taskID: id)
+        let projectName = try restored.projectID.flatMap { try repository.project(id: $0)?.name }
+        let event = TaskLogEvent(
+            eventID: eventID(),
+            timestamp: now(),
+            type: .restored,
+            task: restored,
+            projectName: projectName
+        )
+        return try log(event)
+    }
+
     private func log(_ event: TaskLogEvent) throws -> TaskActionResult {
         do {
             try logger.append(event)

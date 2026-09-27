@@ -261,6 +261,7 @@ struct StructuredTaskView: View {
         case .inbox: "Captured first. Organised when you are ready."
         case .projects: "Longer threads gathered into calm containers."
         case .done: "Finished thoughts, kept without clutter."
+        case .trash: "Recoverable tasks stay here until you restore them."
         case .logbook: "Your readable activity trail in Obsidian."
         case .settings: "Local preferences and vault access."
         }
@@ -305,14 +306,20 @@ private struct TaskRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Button {
-                task.status == .completed ? model.reopen(task) : model.complete(task)
+                if task.status == .trashed {
+                    model.restore(task)
+                } else if task.status == .completed {
+                    model.reopen(task)
+                } else {
+                    model.complete(task)
+                }
             } label: {
-                Image(systemName: task.status == .completed ? "checkmark.circle.fill" : "circle")
+                Image(systemName: actionSymbol)
                     .font(.system(size: 18))
-                    .foregroundStyle(task.status == .completed ? .green.opacity(0.72) : .white.opacity(0.32))
+                    .foregroundStyle(actionColor)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(task.status == .completed ? "Reopen \(task.title)" : "Complete \(task.title)")
+            .accessibilityLabel(actionLabel)
 
             Button {
                 model.selectedTask = task
@@ -346,10 +353,15 @@ private struct TaskRow: View {
             }
             .buttonStyle(.plain)
             .help(task.isToday ? "Remove from Today" : "Add to Today")
+            .disabled(task.status == .trashed)
 
             Menu {
-                Button("Edit") { model.selectedTask = task }
-                Button("Delete", role: .destructive) { model.delete(task) }
+                if task.status == .trashed {
+                    Button("Restore") { model.restore(task) }
+                } else {
+                    Button("Edit") { model.selectedTask = task }
+                    Button("Delete", role: .destructive) { model.delete(task) }
+                }
             } label: {
                 Image(systemName: "ellipsis").foregroundStyle(.white.opacity(0.35))
             }
@@ -360,6 +372,30 @@ private struct TaskRow: View {
         .padding(.vertical, 12)
         .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.045), lineWidth: 1))
+    }
+
+    private var actionSymbol: String {
+        switch task.status {
+        case .completed: "checkmark.circle.fill"
+        case .trashed: "arrow.uturn.backward.circle"
+        case .inbox, .active: "circle"
+        }
+    }
+
+    private var actionColor: Color {
+        switch task.status {
+        case .completed: .green.opacity(0.72)
+        case .trashed: Color(red: 0.78, green: 0.31, blue: 0.13)
+        case .inbox, .active: .white.opacity(0.32)
+        }
+    }
+
+    private var actionLabel: String {
+        switch task.status {
+        case .completed: "Reopen \(task.title)"
+        case .trashed: "Restore \(task.title)"
+        case .inbox, .active: "Complete \(task.title)"
+        }
     }
 }
 

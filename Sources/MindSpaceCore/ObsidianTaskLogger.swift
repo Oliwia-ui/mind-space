@@ -6,6 +6,7 @@ public enum TaskLogEventType: String, Codable, Sendable {
     case completed = "task_completed"
     case reopened = "task_reopened"
     case deleted = "task_deleted"
+    case restored = "task_restored"
 }
 
 public struct TaskLogEvent: Codable, Equatable, Sendable {
