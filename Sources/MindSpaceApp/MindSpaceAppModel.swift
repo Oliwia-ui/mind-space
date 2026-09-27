@@ -40,6 +40,7 @@ final class MindSpaceAppModel: ObservableObject {
     @Published private(set) var preferences = MindSpacePreferences()
     @Published private(set) var pendingLogCount = 0
     @Published var selectedTask: MindSpaceTask?
+    @Published var selectedProjectID: String?
     @Published var isPresentingNewTask = false
     @Published var isCreatingProject = false
     @Published var isTransforming = false
@@ -47,6 +48,7 @@ final class MindSpaceAppModel: ObservableObject {
     @Published var vaultMessage: String?
 
     private let repository: MindSpaceRepository
+    let physics: MindSpacePhysicsController
     private var logger: any TaskEventLogging = UnavailableTaskEventLogger()
     private var scopedVaultURL: URL?
 
@@ -58,9 +60,11 @@ final class MindSpaceAppModel: ObservableObject {
                 appropriateFor: nil,
                 create: true
             ).appendingPathComponent(MindSpaceConfiguration.productName, isDirectory: true)
-            repository = try MindSpaceRepository.disk(
+            let repository = try MindSpaceRepository.disk(
                 at: appSupport.appendingPathComponent(MindSpaceConfiguration.databaseFilename)
             )
+            self.repository = repository
+            physics = try MindSpacePhysicsController(repository: repository)
             try loadPreferencesAndVault()
             try refresh()
         } catch {

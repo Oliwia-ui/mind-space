@@ -39,7 +39,7 @@ public struct ThoughtBounds: Equatable, Sendable {
 public struct ThoughtBody: Equatable, Sendable {
     public let id: String
     public var center: ThoughtPoint
-    public let radius: Double
+    public var radius: Double
     public var velocity: ThoughtVector
 
     public init(id: String, center: ThoughtPoint, radius: Double, velocity: ThoughtVector = .zero) {
@@ -65,7 +65,7 @@ public struct ThoughtPhysicsEngine: Sendable {
     private let settleSpeed: Double
     private let collisionIterations: Int
 
-    public init(maximumSpeed: Double = 78, settleSpeed: Double = 1.5, collisionIterations: Int = 4) {
+    public init(maximumSpeed: Double = 54, settleSpeed: Double = 1.5, collisionIterations: Int = 2) {
         self.maximumSpeed = maximumSpeed
         self.settleSpeed = settleSpeed
         self.collisionIterations = collisionIterations
@@ -87,7 +87,7 @@ public struct ThoughtPhysicsEngine: Sendable {
         bodies[pusherIndex].velocity = .zero
         var contacts: Set<String> = []
 
-        for _ in 0..<collisionIterations {
+        for _ in 0..<1 {
             for firstIndex in bodies.indices {
                 for secondIndex in bodies.indices where secondIndex > firstIndex {
                     let collision = overlap(bodies[firstIndex], bodies[secondIndex])
@@ -100,19 +100,19 @@ public struct ThoughtPhysicsEngine: Sendable {
                         let direction = firstIndex == pusherIndex
                             ? collision.normal
                             : ThoughtVector(dx: -collision.normal.dx, dy: -collision.normal.dy)
-                        bodies[pushedIndex].center.x += direction.dx * collision.depth * 0.72
-                        bodies[pushedIndex].center.y += direction.dy * collision.depth * 0.72
+                        bodies[pushedIndex].center.x += direction.dx * collision.depth * 0.18
+                        bodies[pushedIndex].center.y += direction.dy * collision.depth * 0.18
                         bodies[pushedIndex].center = clamped(
                             bodies[pushedIndex].center,
                             radius: bodies[pushedIndex].radius,
                             bounds: bounds
                         )
                         let movementDirection = normalized(movement, fallback: direction)
-                        let pushSpeed = min(maximumSpeed, max(12, magnitude(movement) * 0.34))
+                        let pushSpeed = min(maximumSpeed, max(8, magnitude(movement) * 0.18))
                         bodies[pushedIndex].velocity = limited(
                             ThoughtVector(
-                                dx: movementDirection.dx * pushSpeed + direction.dx * 8,
-                                dy: movementDirection.dy * pushSpeed + direction.dy * 8
+                                dx: movementDirection.dx * pushSpeed + direction.dx * 5,
+                                dy: movementDirection.dy * pushSpeed + direction.dy * 5
                             )
                         )
                     } else {
@@ -192,7 +192,7 @@ public struct ThoughtPhysicsEngine: Sendable {
         collision: (normal: ThoughtVector, depth: Double),
         bounds: ThoughtBounds
     ) {
-        let correction = collision.depth * 0.5
+        let correction = collision.depth * 0.10
         first.center.x -= collision.normal.dx * correction
         first.center.y -= collision.normal.dy * correction
         second.center.x += collision.normal.dx * correction

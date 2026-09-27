@@ -160,34 +160,54 @@ struct StructuredTaskView: View {
     }
 
     private var projects: some View {
-        ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 13)], spacing: 13) {
-                ForEach(model.projects, id: \.id) { project in
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "cube.transparent")
-                                .foregroundStyle(projectColor(project.colorToken))
-                            Spacer()
-                            Text("\(openTaskCount(project.id)) open")
-                                .font(.caption2)
-                                .foregroundStyle(.white.opacity(0.4))
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 13)], spacing: 13) {
+                    ForEach(model.projects, id: \.id) { project in
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "cube.transparent")
+                                    .foregroundStyle(projectColor(project.colorToken))
+                                Spacer()
+                                Text("\(openTaskCount(project.id)) open")
+                                    .font(.caption2)
+                                    .foregroundStyle(.white.opacity(0.4))
+                            }
+                            Text(project.name)
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.9))
+                            ForEach(model.tasks.filter { $0.projectID == project.id && $0.status != .completed && $0.status != .trashed }.prefix(3), id: \.id) { task in
+                                Button(task.title) { model.selectedTask = task }
+                                    .buttonStyle(.plain)
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.55))
+                                    .lineLimit(1)
+                            }
                         }
-                        Text(project.name)
-                            .font(.headline)
-                            .foregroundStyle(.white.opacity(0.9))
-                        ForEach(model.tasks.filter { $0.projectID == project.id && $0.status != .completed && $0.status != .trashed }.prefix(3), id: \.id) { task in
-                            Button(task.title) { model.selectedTask = task }
-                                .buttonStyle(.plain)
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.55))
-                                .lineLimit(1)
+                        .padding(16)
+                        .glassPanel(cornerRadius: 15)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 15)
+                                .stroke(
+                                    model.selectedProjectID == project.id ? Color.orange.opacity(0.72) : .clear,
+                                    lineWidth: 1.5
+                                )
                         }
+                        .id(project.id)
+                        .onTapGesture { model.selectedProjectID = project.id }
                     }
-                    .padding(16)
-                    .glassPanel(cornerRadius: 15)
                 }
+                .padding(18)
             }
-            .padding(18)
+            .onAppear { scrollToSelectedProject(using: proxy) }
+            .onChange(of: model.selectedProjectID) { _, _ in scrollToSelectedProject(using: proxy) }
+        }
+    }
+
+    private func scrollToSelectedProject(using proxy: ScrollViewProxy) {
+        guard let projectID = model.selectedProjectID else { return }
+        withAnimation(.easeOut(duration: 0.28)) {
+            proxy.scrollTo(projectID, anchor: .center)
         }
     }
 

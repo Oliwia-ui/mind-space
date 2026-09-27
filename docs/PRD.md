@@ -20,7 +20,8 @@ The app is for one person who captures coursework, projects, ideas, and small ob
 ## Custom features
 
 - Data-driven Mind Space where cards represent tasks, cubes represent projects, and spheres represent ideas.
-- Calm low-amplitude drift, hover detail, and a reduced-motion mode.
+- Pool-like rearrangement where any existing task, project, or idea can be dragged as the pusher; there is no separate pusher tool or pusher orb.
+- Soft capped collisions, restrained contact halos, gradual inertial settling, safe canvas boundaries, locally persisted positions, and a Reset Layout action.
 - A 700–1200 ms **MAKE IT MAKE SENSE** transition that preserves data while changing its presentation from spatial objects to task rows and project groups.
 
 ## Non-goals
@@ -61,7 +62,7 @@ Mind Space writes only to `Tasks/`. `Focus/` is reserved for the separate timer 
 
 ### Mind Space
 
-A near-black navy canvas contains faint stars and restrained orbital guides. Saved tasks and projects occupy generous negative space around a warm burnt-orange organising sphere. Capture and settings controls remain quiet and peripheral.
+A near-black navy canvas contains faint stars and restrained orbital guides. Saved task cards, project cubes, and idea spheres occupy generous negative space around the warm burnt-orange transformation control. The transformation control is not a physics object and never acts as a pusher. Existing thought objects can be dragged into one another to create slow, soft movement; positions are saved after the objects settle.
 
 ### Structured view
 
@@ -75,12 +76,14 @@ A native SwiftUI `NavigationSplitView` contains Today, Inbox, Projects, Done, Lo
 - Completion is present on every task row and completed tasks can be reopened.
 - Burnt orange is reserved for the primary transformation and selected actions.
 - Motion explains continuity but never delays access; system Reduce Motion and the in-app preference shorten or remove it.
+- Physics remain deliberately non-game-like: speed is capped, boundary contact does not bounce, collisions are soft, and movement decays to rest.
+- Reset Layout clears only saved spatial positions and restores the calm automatic arrangement without changing tasks or projects.
 - Vault failure cannot destroy or reject a valid task action.
 - Stable string IDs remain independent of database row identifiers so the timer app can link sessions safely.
 
 ## Alternative considered and rejected
 
-A generic dashboard and a combined task/Pomodoro screen were considered. They were rejected because they would be more cluttered, less personal, too similar to existing task apps, and would blur the boundary with the separate timer product.
+A generic dashboard and a combined task/Pomodoro screen were considered. They were rejected because they would be more cluttered, less personal, too similar to existing task apps, and would blur the boundary with the separate timer product. A separate pusher tool or decorative pusher orb was also rejected because the physical interaction must come from moving the user's own editable thought objects.
 
 ## Testable acceptance criteria
 
@@ -91,8 +94,12 @@ A generic dashboard and a combined task/Pomodoro screen were considered. They we
 - Tasks can be added to and removed from Today.
 - Mind Space objects derive from actual saved tasks and projects.
 - Selecting an object opens the corresponding item by stable ID.
+- Dragging a real task, project, or idea into another real object gently pushes the contacted object in the direction of travel.
+- Thought movement remains speed-limited, settles without chaotic bouncing, and cannot leave the safe canvas bounds.
+- Contact produces a subtle temporary halo, and settled positions survive application relaunch.
+- Reset Layout restores the automatic arrangement without mutating task or project data.
 - **MAKE IT MAKE SENSE** reaches the structured view without mutating task data.
-- Reduced motion removes drift and shortens or skips the transformation.
+- Reduced motion shortens or skips the transformation while direct manipulation remains available.
 - Create, edit, complete, reopen, and delete events append correct Markdown.
 - Existing Markdown history remains intact after every write.
 - Vault errors remain visible and retryable while task state stays saved.

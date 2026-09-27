@@ -3,13 +3,32 @@ import SwiftUI
 
 struct MindSpaceCanvasView: View {
     @ObservedObject var model: MindSpaceAppModel
+    @ObservedObject private var physics: MindSpacePhysicsController
+
+    init(model: MindSpaceAppModel) {
+        self.model = model
+        _physics = ObservedObject(wrappedValue: model.physics)
+    }
 
     private var openTasks: [MindSpaceTask] {
-        Array(model.tasks.filter { $0.status != .completed && $0.status != .trashed }.prefix(10))
+        model.tasks.filter { $0.status != .completed && $0.status != .trashed }
+    }
+
+    private var visibleProjects: [MindSpaceProject] {
+        model.projects
+    }
+
+    private var layoutSignature: [String] {
+        openTasks.map { "task:\($0.id):\($0.category ?? "")" }
+            + visibleProjects.map { "project:\($0.id)" }
     }
 
     var body: some View {
         GeometryReader { geometry in
+            let defaults = defaultBodies(in: geometry.size)
+            let kinds = objectKinds
+            let bounds = safeBounds(in: geometry.size)
+
             ZStack {
                 orbitalGuides(in: geometry.size)
 
@@ -24,26 +43,67 @@ struct MindSpaceCanvasView: View {
                 }
                 .position(x: geometry.size.width / 2, y: 72)
 
+                Button {
+                    physics.reset(defaultBodies: defaults, kinds: kinds, bounds: bounds)
+                } label: {
+                    Label("Reset Layout", systemImage: "arrow.counterclockwise")
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .glassPanel(cornerRadius: 15)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.58))
+                .position(x: geometry.size.width - 78, y: 48)
+                .accessibilityIdentifier("resetMindSpaceLayoutButton")
+
                 ForEach(Array(openTasks.enumerated()), id: \.element.id) { index, task in
+                    let fallback = taskPosition(index: index, size: geometry.size)
+                    let center = physics.center(for: task.id, fallback: thoughtPoint(fallback))
                     mindObject(for: task)
-                        .position(model.isTransforming ? center(in: geometry.size) : taskPosition(index: index, size: geometry.size))
+                        .scaleEffect(physics.contactIDs.contains(task.id) ? 1.025 : 1)
+                        .shadow(
+                            color: physics.contactIDs.contains(task.id) ? Color.cyan.opacity(0.30) : .clear,
+                            radius: physics.contactIDs.contains(task.id) ? 19 : 0
+                        )
+                        .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
                         .rotationEffect(.degrees(model.isTransforming ? Double(index * 22) : 0))
                         .scaleEffect(model.isTransforming ? 0.42 : 1)
                         .opacity(model.isTransforming ? 0.15 : 1)
                         .animation(objectAnimation(index: index), value: model.isTransforming)
+                        .animation(physics.draggedObjectID == task.id ? nil : .easeOut(duration: 0.09), value: center)
+                        .animation(.easeOut(duration: 0.24), value: physics.contactIDs.contains(task.id))
+                        .gesture(dragGesture(for: task.id, fallback: center))
+                        .onTapGesture { model.selectedTask = task }
                 }
 
-                ForEach(Array(model.projects.prefix(5).enumerated()), id: \.element.id) { index, project in
-                    ProjectOrb(project: project, taskCount: model.tasks.filter { $0.projectID == project.id && $0.status != .completed && $0.status != .trashed }.count)
-                        .onTapGesture {
-                            model.selectedSection = .projects
-                            transformToStructured()
-                        }
-                        .position(model.isTransforming ? center(in: geometry.size) : projectPosition(index: index, size: geometry.size))
-                        .rotation3DEffect(.degrees(model.isTransforming ? 70 : -8), axis: (x: 0.7, y: 1, z: 0.2))
-                        .scaleEffect(model.isTransforming ? 0.35 : 1)
-                        .opacity(model.isTransforming ? 0.12 : 1)
-                        .animation(objectAnimation(index: index + 4), value: model.isTransforming)
+                ForEach(Array(visibleProjects.enumerated()), id: \.element.id) { index, project in
+                    let fallback = projectPosition(index: index, size: geometry.size)
+                    let center = physics.center(for: project.id, fallback: thoughtPoint(fallback))
+                    ProjectOrb(
+                        project: project,
+                        taskCount: model.tasks.filter {
+                            $0.projectID == project.id && $0.status != .completed && $0.status != .trashed
+                        }.count
+                    )
+                    .scaleEffect(physics.contactIDs.contains(project.id) ? 1.025 : 1)
+                    .shadow(
+                        color: physics.contactIDs.contains(project.id) ? Color.cyan.opacity(0.30) : .clear,
+                        radius: physics.contactIDs.contains(project.id) ? 19 : 0
+                    )
+                    .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
+                    .rotation3DEffect(.degrees(model.isTransforming ? 70 : -8), axis: (x: 0.7, y: 1, z: 0.2))
+                    .scaleEffect(model.isTransforming ? 0.35 : 1)
+                    .opacity(model.isTransforming ? 0.12 : 1)
+                    .animation(objectAnimation(index: index + 4), value: model.isTransforming)
+                    .animation(physics.draggedObjectID == project.id ? nil : .easeOut(duration: 0.09), value: center)
+                    .animation(.easeOut(duration: 0.24), value: physics.contactIDs.contains(project.id))
+                    .gesture(dragGesture(for: project.id, fallback: center))
+                    .onTapGesture {
+                        model.selectedProjectID = project.id
+                        model.selectedSection = .projects
+                        transformToStructured()
+                    }
                 }
 
                 VStack(spacing: 14) {
@@ -90,12 +150,27 @@ struct MindSpaceCanvasView: View {
                 .scaleEffect(model.isTransforming ? 0.74 : 1)
                 .opacity(model.isTransforming ? 0 : 1)
 
-                if openTasks.isEmpty && model.projects.isEmpty {
+                if openTasks.isEmpty && visibleProjects.isEmpty {
                     EmptyMindSpaceCard {
                         model.isPresentingNewTask = true
                     }
                     .position(x: geometry.size.width / 2, y: geometry.size.height - 94)
                 }
+            }
+            .coordinateSpace(name: "mindSpaceCanvas")
+            .onAppear {
+                physics.configure(defaultBodies: defaults, kinds: kinds, bounds: bounds)
+            }
+            .onChange(of: geometry.size) { _, _ in
+                physics.configure(defaultBodies: defaults, kinds: kinds, bounds: bounds)
+            }
+            .onChange(of: layoutSignature) { _, _ in
+                physics.configure(defaultBodies: defaults, kinds: kinds, bounds: bounds)
+            }
+            .alert("Mind Space layout needs attention", isPresented: physicsErrorBinding) {
+                Button("OK", role: .cancel) { physics.errorMessage = nil }
+            } message: {
+                Text(physics.errorMessage ?? "Unknown layout error")
             }
         }
         .padding(24)
@@ -106,11 +181,41 @@ struct MindSpaceCanvasView: View {
     private func mindObject(for task: MindSpaceTask) -> some View {
         if task.category?.localizedCaseInsensitiveContains("idea") == true {
             IdeaSphere(task: task, projectName: model.project(for: task)?.name)
-                .onTapGesture { model.selectedTask = task }
         } else {
             FloatingTaskCard(task: task, projectName: model.project(for: task)?.name)
-                .onTapGesture { model.selectedTask = task }
         }
+    }
+
+    private var objectKinds: [String: MindSpaceObjectKind] {
+        var kinds = Dictionary(uniqueKeysWithValues: openTasks.map { ($0.id, MindSpaceObjectKind.task) })
+        for project in visibleProjects { kinds[project.id] = .project }
+        return kinds
+    }
+
+    private func defaultBodies(in size: CGSize) -> [ThoughtBody] {
+        let tasks = openTasks.enumerated().map { index, task in
+            let position = taskPosition(index: index, size: size)
+            let radius = task.category?.localizedCaseInsensitiveContains("idea") == true ? 58.0 : 104.0
+            return ThoughtBody(id: task.id, center: thoughtPoint(position), radius: radius)
+        }
+        let projects = visibleProjects.enumerated().map { index, project in
+            ThoughtBody(id: project.id, center: thoughtPoint(projectPosition(index: index, size: size)), radius: 61)
+        }
+        return tasks + projects
+    }
+
+    private func dragGesture(for objectID: String, fallback: ThoughtPoint) -> some Gesture {
+        DragGesture(minimumDistance: 4, coordinateSpace: .named("mindSpaceCanvas"))
+            .onChanged { value in
+                if physics.draggedObjectID != objectID {
+                    physics.beginDragging(objectID: objectID, at: fallback)
+                }
+                physics.drag(objectID: objectID, to: thoughtPoint(value.location))
+            }
+            .onEnded { value in
+                physics.drag(objectID: objectID, to: thoughtPoint(value.location))
+                physics.endDragging(objectID: objectID)
+            }
     }
 
     private func orbitalGuides(in size: CGSize) -> some View {
@@ -140,27 +245,53 @@ struct MindSpaceCanvasView: View {
         }
     }
 
-    private func center(in size: CGSize) -> CGPoint {
+    private func safeBounds(in size: CGSize) -> ThoughtBounds {
+        ThoughtBounds(minX: 14, minY: 128, maxX: Double(size.width) - 14, maxY: Double(size.height) - 18)
+    }
+
+    private func centerPoint(in size: CGSize) -> CGPoint {
         CGPoint(x: size.width / 2, y: size.height / 2 + 20)
     }
 
     private func taskPosition(index: Int, size: CGSize) -> CGPoint {
-        let positions: [(CGFloat, CGFloat)] = [
-            (0.16, 0.24), (0.78, 0.22), (0.12, 0.55), (0.84, 0.54), (0.26, 0.78),
-            (0.68, 0.80), (0.35, 0.34), (0.67, 0.38), (0.42, 0.88), (0.91, 0.74),
-        ]
-        let point = positions[index % positions.count]
-        return CGPoint(x: size.width * point.0, y: size.height * point.1)
+        automaticPosition(index: index, total: openTasks.count + visibleProjects.count, size: size)
     }
 
     private func projectPosition(index: Int, size: CGSize) -> CGPoint {
-        let positions: [(CGFloat, CGFloat)] = [(0.27, 0.48), (0.73, 0.67), (0.52, 0.22), (0.09, 0.82), (0.90, 0.34)]
-        let point = positions[index % positions.count]
-        return CGPoint(x: size.width * point.0, y: size.height * point.1)
+        automaticPosition(
+            index: openTasks.count + index,
+            total: openTasks.count + visibleProjects.count,
+            size: size
+        )
+    }
+
+    private func automaticPosition(index: Int, total: Int, size: CGSize) -> CGPoint {
+        let progress = sqrt(Double(index + 1) / Double(max(total, 1)))
+        let angle = Double(index) * 2.399_963
+        let radialScale = 0.19 + 0.29 * progress
+        return CGPoint(
+            x: size.width / 2 + cos(angle) * size.width * radialScale,
+            y: size.height / 2 + sin(angle) * size.height * radialScale * 0.72 + 32
+        )
     }
 
     private func objectAnimation(index: Int) -> Animation {
         .easeInOut(duration: 0.72).delay(Double(index) * 0.025)
+    }
+
+    private func thoughtPoint(_ point: CGPoint) -> ThoughtPoint {
+        ThoughtPoint(x: Double(point.x), y: Double(point.y))
+    }
+
+    private func point(_ point: ThoughtPoint) -> CGPoint {
+        CGPoint(x: point.x, y: point.y)
+    }
+
+    private var physicsErrorBinding: Binding<Bool> {
+        Binding(
+            get: { physics.errorMessage != nil },
+            set: { if !$0 { physics.errorMessage = nil } }
+        )
     }
 }
 

@@ -20,7 +20,9 @@ func draggedThoughtPushesAnotherThought() {
     let movedIdea = frame.bodies.first { $0.id == idea.id }
     #expect(movedTask?.center == ThoughtPoint(x: 210, y: 200))
     #expect((movedIdea?.center.x ?? 0) > idea.center.x)
+    #expect((movedIdea?.center.x ?? 0) - idea.center.x < 20)
     #expect((movedIdea?.velocity.dx ?? 0) > 0)
+    #expect((movedIdea?.velocity.dx ?? 100) < 60)
     #expect(frame.contactIDs == [task.id, idea.id])
 }
 
