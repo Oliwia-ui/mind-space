@@ -82,6 +82,25 @@ public struct MindSpaceProject: Identifiable, Equatable, Codable, Sendable {
     }
 }
 
+public enum MindSpaceObjectKind: String, Codable, Sendable {
+    case task
+    case project
+}
+
+public struct MindSpaceObjectPosition: Equatable, Codable, Sendable {
+    public let objectID: String
+    public let kind: MindSpaceObjectKind
+    public var normalizedX: Double
+    public var normalizedY: Double
+
+    public init(objectID: String, kind: MindSpaceObjectKind, normalizedX: Double, normalizedY: Double) {
+        self.objectID = objectID
+        self.kind = kind
+        self.normalizedX = normalizedX
+        self.normalizedY = normalizedY
+    }
+}
+
 public struct MindSpacePreferences: Equatable, Sendable {
     public var reducedMotion: Bool
     public var vaultBookmark: Data?

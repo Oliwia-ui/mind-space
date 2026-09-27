@@ -199,6 +199,32 @@ func preferencesPersist() throws {
     #expect(try repository.preferences() == preferences)
 }
 
+@Test("thought object positions persist across reopening and can be reset")
+func thoughtObjectPositionsPersistAndReset() throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("MindSpaceLayoutTests-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let databaseURL = directory.appendingPathComponent("MindSpace.sqlite3")
+    let saved = MindSpaceObjectPosition(
+        objectID: "task_fixed",
+        kind: .task,
+        normalizedX: 0.72,
+        normalizedY: 0.31
+    )
+
+    do {
+        let repository = try MindSpaceRepository.disk(at: databaseURL)
+        try repository.saveObjectPositions([saved])
+    }
+
+    let reopened = try MindSpaceRepository.disk(at: databaseURL)
+    #expect(try reopened.objectPositions() == [saved])
+
+    try reopened.resetObjectPositions()
+    #expect(try reopened.objectPositions().isEmpty)
+}
+
 @Test("blank names and non-positive focus estimates are rejected")
 func invalidInputIsRejected() throws {
     let repository = try MindSpaceRepository.inMemory()

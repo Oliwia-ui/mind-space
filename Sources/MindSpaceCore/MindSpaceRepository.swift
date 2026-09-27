@@ -263,6 +263,56 @@ public final class MindSpaceRepository: @unchecked Sendable {
         }
     }
 
+    public func objectPositions() throws -> [MindSpaceObjectPosition] {
+        try lock.withLock {
+            let statement = try prepare("SELECT object_id,kind,normalized_x,normalized_y FROM mind_space_positions ORDER BY kind,object_id")
+            defer { sqlite3_finalize(statement) }
+            var positions: [MindSpaceObjectPosition] = []
+            var step = sqlite3_step(statement)
+            while step == SQLITE_ROW {
+                guard let objectID = text(statement, 0),
+                      let kindValue = text(statement, 1),
+                      let kind = MindSpaceObjectKind(rawValue: kindValue) else {
+                    throw MindSpaceRepositoryError.corruptStoredValue(
+                        field: "mind_space_positions.kind",
+                        value: text(statement, 1) ?? "NULL"
+                    )
+                }
+                positions.append(MindSpaceObjectPosition(
+                    objectID: objectID,
+                    kind: kind,
+                    normalizedX: sqlite3_column_double(statement, 2),
+                    normalizedY: sqlite3_column_double(statement, 3)
+                ))
+                step = sqlite3_step(statement)
+            }
+            guard step == SQLITE_DONE else { throw dbError() }
+            return positions
+        }
+    }
+
+    public func saveObjectPositions(_ positions: [MindSpaceObjectPosition]) throws {
+        try transaction {
+            let statement = try prepare(
+                "INSERT OR REPLACE INTO mind_space_positions (object_id,kind,normalized_x,normalized_y) VALUES (?,?,?,?)"
+            )
+            defer { sqlite3_finalize(statement) }
+            for position in positions {
+                sqlite3_reset(statement)
+                sqlite3_clear_bindings(statement)
+                try bind(position.objectID, to: statement, at: 1)
+                try bind(position.kind.rawValue, to: statement, at: 2)
+                sqlite3_bind_double(statement, 3, min(max(position.normalizedX, 0), 1))
+                sqlite3_bind_double(statement, 4, min(max(position.normalizedY, 0), 1))
+                try stepDone(statement)
+            }
+        }
+    }
+
+    public func resetObjectPositions() throws {
+        try transaction { try execute("DELETE FROM mind_space_positions") }
+    }
+
     public func enqueueLogEvent(_ event: TaskLogEvent) throws {
         let payload = try String(decoding: JSONEncoder().encode(event), as: UTF8.self)
         try transaction {
@@ -310,7 +360,7 @@ public final class MindSpaceRepository: @unchecked Sendable {
 
     private func migrate() throws {
         var version = try scalarInt("PRAGMA user_version")
-        guard version <= 2 else { throw MindSpaceRepositoryError.databaseFailure(code: SQLITE_ERROR, message: "Database schema version \(version) is newer than supported version 2") }
+        guard version <= 3 else { throw MindSpaceRepositoryError.databaseFailure(code: SQLITE_ERROR, message: "Database schema version \(version) is newer than supported version 3") }
         if version == 0 {
             try transaction {
                 try execute("CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL, color_token TEXT NOT NULL, created_at REAL NOT NULL, updated_at REAL NOT NULL, is_archived INTEGER NOT NULL DEFAULT 0, archived_at REAL)")
@@ -327,6 +377,13 @@ public final class MindSpaceRepository: @unchecked Sendable {
             try transaction {
                 try execute("CREATE TABLE pending_task_log_events (event_id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at REAL NOT NULL)")
                 try execute("PRAGMA user_version = 2")
+            }
+            version = 2
+        }
+        if version == 2 {
+            try transaction {
+                try execute("CREATE TABLE mind_space_positions (object_id TEXT NOT NULL, kind TEXT NOT NULL, normalized_x REAL NOT NULL, normalized_y REAL NOT NULL, PRIMARY KEY (object_id, kind))")
+                try execute("PRAGMA user_version = 3")
             }
         }
     }
