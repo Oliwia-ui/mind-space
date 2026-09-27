@@ -25,10 +25,6 @@ final class MindSpacePhysicsController: ObservableObject {
         )
     }
 
-    isolated deinit {
-        timer?.invalidate()
-    }
-
     func configure(defaultBodies: [ThoughtBody], kinds: [String: MindSpaceObjectKind], bounds: ThoughtBounds) {
         let priorBounds = self.bounds
         self.bounds = bounds
