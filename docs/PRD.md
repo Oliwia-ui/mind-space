@@ -13,7 +13,7 @@ The app is for one person who captures coursework, projects, ideas, and small ob
 - Create, view, edit, complete, reopen, and safely trash tasks.
 - Inbox by default, an explicitly chosen Today list, projects, Done, Logbook, and Settings.
 - Stable task identifiers for future Pomodoro session links.
-- SwiftData persistence stored locally on the Mac.
+- Versioned SQLite persistence stored locally on the Mac.
 - Native macOS Obsidian vault selection with append-only Markdown history.
 - Visible retryable state when vault logging fails without rolling back task actions.
 
@@ -35,7 +35,7 @@ Mind Space does not include accounts, cloud sync, collaboration, notifications, 
 4. Press **MAKE IT MAKE SENSE**.
 5. Objects converge and resolve into the structured task interface.
 6. Choose a short Today list, organise projects, and complete tasks.
-7. SwiftData persists each action and the logging service appends the corresponding event to the configured Obsidian vault.
+7. SQLite persists each action and the logging service appends the corresponding event to the configured Obsidian vault.
 
 ## Framework decision
 
@@ -43,7 +43,7 @@ The application uses **Swift and SwiftUI**. This satisfies the native Apple requ
 
 ## Local storage decision
 
-**SwiftData** is the source of truth for tasks, projects, preferences, and pending log events. It is suitable for the app's single-user relational model, integrates directly with SwiftUI, supports local persistence without services, and can be reused in an iPhone target. The persistence and domain layer live in `MindSpaceCore` rather than the macOS app target.
+**SQLite** is the source of truth for tasks, projects, preferences, and future pending log events. SwiftData was evaluated first, but its macro implementation is unavailable in the installed Xcode Command Line Tools, preventing the required clean-clone build and test verification. SQLite is built into macOS, fully offline, supports explicit versioned migrations and deterministic reopen tests, and keeps persistence independent of the UI. The typed repository and domain models live in `MindSpaceCore` so a future iPhone SwiftUI target can reuse them without exposing SQL to views.
 
 ## Obsidian vault structure
 
@@ -76,7 +76,7 @@ A native SwiftUI `NavigationSplitView` contains Today, Inbox, Projects, Done, Lo
 - Burnt orange is reserved for the primary transformation and selected actions.
 - Motion explains continuity but never delays access; system Reduce Motion and the in-app preference shorten or remove it.
 - Vault failure cannot destroy or reject a valid task action.
-- Stable string IDs remain independent of SwiftData internals so the timer app can link sessions safely.
+- Stable string IDs remain independent of database row identifiers so the timer app can link sessions safely.
 
 ## Alternative considered and rejected
 
