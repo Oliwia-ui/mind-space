@@ -173,9 +173,21 @@ struct StructuredTaskView: View {
                                     .font(.caption2)
                                     .foregroundStyle(.white.opacity(0.4))
                             }
-                            Text(project.name)
-                                .font(.headline)
-                                .foregroundStyle(.white.opacity(0.9))
+                            HStack(spacing: 8) {
+                                Text(project.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.white.opacity(0.9))
+                                Spacer()
+                                Button {
+                                    model.editingProject = project
+                                } label: {
+                                    Label("Manage", systemImage: "slider.horizontal.3")
+                                        .labelStyle(.iconOnly)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.white.opacity(0.42))
+                                .help("Manage \(project.name)")
+                            }
                             ForEach(model.tasks.filter { $0.projectID == project.id && $0.status != .completed && $0.status != .trashed }.prefix(3), id: \.id) { task in
                                 Button(task.title) { model.selectedTask = task }
                                     .buttonStyle(.plain)

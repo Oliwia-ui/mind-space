@@ -41,8 +41,11 @@ final class MindSpaceAppModel: ObservableObject {
     @Published private(set) var pendingLogCount = 0
     @Published var selectedTask: MindSpaceTask?
     @Published var selectedProjectID: String?
+    @Published var editingProject: MindSpaceProject?
     @Published var isPresentingNewTask = false
     @Published var isCreatingProject = false
+    @Published var isNamingGalaxy = false
+    @Published private(set) var pendingGalaxyTaskIDs: [String] = []
     @Published var isTransforming = false
     @Published var errorMessage: String?
     @Published var vaultMessage: String?
@@ -179,6 +182,86 @@ final class MindSpaceAppModel: ObservableObject {
         }
     }
 
+    @discardableResult
+    func updateProject(_ project: MindSpaceProject, name: String, colorToken: String, memberTaskIDs: Set<String>) -> Bool {
+        perform {
+            var edited = project
+            edited.name = name
+            edited.colorToken = colorToken
+            let result = try service().updateProject(edited, memberTaskIDs: Array(memberTaskIDs))
+            showLoggingIssues(result.loggingIssues)
+            editingProject = nil
+        }
+    }
+
+    @discardableResult
+    func dissolveProject(_ project: MindSpaceProject) -> Bool {
+        perform {
+            let result = try service().dissolveProject(id: project.id)
+            showLoggingIssues(result.loggingIssues)
+            if selectedProjectID == project.id { selectedProjectID = nil }
+            editingProject = nil
+        }
+    }
+
+    func handleGroup(_ pair: ThoughtGroupPair) {
+        let firstTask = tasks.first { $0.id == pair.firstID }
+        let secondTask = tasks.first { $0.id == pair.secondID }
+        let firstProject = projects.first { $0.id == pair.firstID }
+        let secondProject = projects.first { $0.id == pair.secondID }
+
+        if let task = firstTask, let project = secondProject {
+            assign(taskID: task.id, to: project.id)
+            return
+        }
+        if let project = firstProject, let task = secondTask {
+            assign(taskID: task.id, to: project.id)
+            return
+        }
+        guard let firstTask, let secondTask else { return }
+
+        if let firstProjectID = firstTask.projectID,
+           let secondProjectID = secondTask.projectID,
+           firstProjectID != secondProjectID {
+            errorMessage = "Move a thought out of its current galaxy before connecting it to another one."
+        } else if let destinationProjectID = secondTask.projectID {
+            assign(taskID: firstTask.id, to: destinationProjectID)
+        } else if let destinationProjectID = firstTask.projectID {
+            assign(taskID: secondTask.id, to: destinationProjectID)
+        } else {
+            pendingGalaxyTaskIDs = [firstTask.id, secondTask.id]
+            isNamingGalaxy = true
+        }
+    }
+
+    @discardableResult
+    func createGalaxy(name: String, colorToken: String) -> Bool {
+        let taskIDs = pendingGalaxyTaskIDs
+        return perform {
+            let result = try service().createProject(
+                name: name,
+                colorToken: colorToken,
+                assigningTaskIDs: taskIDs
+            )
+            showLoggingIssues(result.loggingIssues)
+            selectedProjectID = result.project.id
+            pendingGalaxyTaskIDs = []
+            isNamingGalaxy = false
+        }
+    }
+
+    func cancelGalaxyCreation() {
+        pendingGalaxyTaskIDs = []
+        isNamingGalaxy = false
+    }
+
+    private func assign(taskID: String, to projectID: String) {
+        perform {
+            let result = try service().assignTask(id: taskID, to: projectID)
+            showLoggingIssue(result.loggingIssue)
+        }
+    }
+
     func setReducedMotion(_ enabled: Bool) {
         perform {
             preferences.reducedMotion = enabled
@@ -236,19 +319,27 @@ final class MindSpaceAppModel: ObservableObject {
         pendingLogCount = try repository.pendingLogEvents().count
     }
 
-    private func perform(_ action: () throws -> Void) {
+    @discardableResult
+    private func perform(_ action: () throws -> Void) -> Bool {
         do {
             try action()
             try refresh()
             errorMessage = nil
+            return true
         } catch {
             errorMessage = String(describing: error)
+            return false
         }
     }
 
     private func showLoggingIssue(_ issue: String?) {
         guard issue != nil else { return }
         vaultMessage = "Task saved locally. Obsidian logging needs attention."
+    }
+
+    private func showLoggingIssues(_ issues: [String]) {
+        guard !issues.isEmpty else { return }
+        vaultMessage = "Changes saved locally. \(issues.count) Obsidian event(s) need attention."
     }
 
     private func loadPreferencesAndVault() throws {

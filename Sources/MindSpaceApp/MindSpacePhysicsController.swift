@@ -6,10 +6,12 @@ final class MindSpacePhysicsController: ObservableObject {
     @Published private(set) var bodies: [ThoughtBody] = []
     @Published private(set) var contactIDs: Set<String> = []
     @Published private(set) var draggedObjectID: String?
+    @Published private(set) var groupingPreview: ThoughtGroupPreview?
     @Published var errorMessage: String?
 
     private let repository: MindSpaceRepository
     private let engine = ThoughtPhysicsEngine()
+    private var groupingEngine = ThoughtGroupingEngine()
     private var kinds: [String: MindSpaceObjectKind] = [:]
     private var storedPositions: [String: MindSpaceObjectPosition] = [:]
     private var bounds = ThoughtBounds(minX: 0, minY: 0, maxX: 1, maxY: 1)
@@ -17,6 +19,7 @@ final class MindSpacePhysicsController: ObservableObject {
     private var timer: Timer?
     private var lastTickDate: Date?
     private var contactExpiry: [String: Date] = [:]
+    private var groupingHoldTask: Task<Void, Never>?
 
     init(repository: MindSpaceRepository) throws {
         self.repository = repository
@@ -59,6 +62,9 @@ final class MindSpacePhysicsController: ObservableObject {
         timer = nil
         draggedObjectID = objectID
         lastDragPoint = point
+        groupingEngine.cancel()
+        groupingPreview = nil
+        groupingHoldTask?.cancel()
     }
 
     func drag(objectID: String, to point: ThoughtPoint) {
@@ -70,14 +76,20 @@ final class MindSpacePhysicsController: ObservableObject {
         let frame = engine.drag(objectID: objectID, to: point, movement: movement, bodies: bodies, bounds: bounds)
         bodies = frame.bodies
         updateContacts(frame.contactIDs, at: Date())
+        updateGroupingPreview(draggedID: objectID, at: Date())
         lastDragPoint = point
     }
 
-    func endDragging(objectID: String) {
-        guard draggedObjectID == objectID else { return }
+    func endDragging(objectID: String) -> ThoughtGroupPair? {
+        guard draggedObjectID == objectID else { return nil }
+        let pair = groupingEngine.finish(draggedID: objectID, bodies: bodies, at: Date())
+        groupingHoldTask?.cancel()
+        groupingHoldTask = nil
+        groupingPreview = nil
         draggedObjectID = nil
         lastDragPoint = nil
         startSettling()
+        return pair
     }
 
     func reset(defaultBodies: [ThoughtBody], kinds: [String: MindSpaceObjectKind], bounds: ThoughtBounds) {
@@ -89,6 +101,10 @@ final class MindSpacePhysicsController: ObservableObject {
             contactExpiry = [:]
             contactIDs = []
             draggedObjectID = nil
+            groupingEngine.cancel()
+            groupingPreview = nil
+            groupingHoldTask?.cancel()
+            groupingHoldTask = nil
             self.bounds = bounds
             self.kinds = kinds
             bodies = engine.step(bodies: defaultBodies, deltaTime: 0, bounds: bounds).bodies
@@ -133,6 +149,42 @@ final class MindSpacePhysicsController: ObservableObject {
         }
         contactExpiry = contactExpiry.filter { $0.value > date }
         contactIDs = Set(contactExpiry.keys)
+    }
+
+    private func updateGroupingPreview(draggedID: String, at date: Date) {
+        let previousTarget = groupingPreview?.targetID
+        let preview = groupingEngine.update(draggedID: draggedID, bodies: bodies, at: date)
+
+        if let preview,
+           kinds[preview.draggedID] == .project,
+           kinds[preview.targetID] == .project {
+            groupingEngine.cancel()
+            groupingPreview = nil
+            groupingHoldTask?.cancel()
+            groupingHoldTask = nil
+            return
+        }
+
+        groupingPreview = preview
+        guard let preview else {
+            groupingHoldTask?.cancel()
+            groupingHoldTask = nil
+            return
+        }
+        guard previousTarget != preview.targetID || groupingHoldTask == nil else { return }
+
+        groupingHoldTask?.cancel()
+        groupingHoldTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(720))
+            guard let self,
+                  !Task.isCancelled,
+                  self.draggedObjectID == draggedID else { return }
+            self.groupingPreview = self.groupingEngine.update(
+                draggedID: draggedID,
+                bodies: self.bodies,
+                at: Date()
+            )
+        }
     }
 
     private func savePositions() {

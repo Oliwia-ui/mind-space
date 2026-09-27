@@ -10,6 +10,18 @@ public struct TaskActionResult: Sendable {
     }
 }
 
+public struct ProjectActionResult: Sendable {
+    public let project: MindSpaceProject
+    public let tasks: [MindSpaceTask]
+    public let loggingIssues: [String]
+
+    public init(project: MindSpaceProject, tasks: [MindSpaceTask], loggingIssues: [String]) {
+        self.project = project
+        self.tasks = tasks
+        self.loggingIssues = loggingIssues
+    }
+}
+
 public struct TaskLogRetryFailure: Equatable, Sendable {
     public let eventID: String
     public let message: String
@@ -116,6 +128,49 @@ public final class TaskActionService: @unchecked Sendable {
         return try log(event)
     }
 
+    public func assignTask(id: String, to projectID: String?) throws -> TaskActionResult {
+        guard let previous = try repository.task(id: id) else {
+            throw MindSpaceRepositoryError.taskNotFound(id)
+        }
+        let updated = try repository.assign(taskID: id, to: projectID)
+        return try logEdit(from: previous, to: updated)
+    }
+
+    public func createProject(
+        name: String,
+        colorToken: String,
+        assigningTaskIDs: [String]
+    ) throws -> ProjectActionResult {
+        let previous = try taskSnapshot(ids: Set(assigningTaskIDs))
+        let project = try repository.createProject(
+            name: name,
+            colorToken: colorToken,
+            assigningTaskIDs: assigningTaskIDs
+        )
+        let updated = try assigningTaskIDs.compactMap { try repository.task(id: $0) }
+        return try projectResult(project: project, previous: previous, updated: updated)
+    }
+
+    public func updateProject(
+        _ project: MindSpaceProject,
+        memberTaskIDs: [String]
+    ) throws -> ProjectActionResult {
+        let previousTasks = try repository.tasks()
+        let previous = Dictionary(uniqueKeysWithValues: previousTasks.map { ($0.id, $0) })
+        let updatedProject = try repository.updateProject(project, memberTaskIDs: memberTaskIDs)
+        return try projectResult(project: updatedProject, previous: previous, updated: repository.tasks())
+    }
+
+    public func dissolveProject(id: String) throws -> ProjectActionResult {
+        let previousTasks = try repository.tasks()
+        let previous = Dictionary(uniqueKeysWithValues: previousTasks.map { ($0.id, $0) })
+        try repository.dissolveProject(projectID: id)
+        guard let project = try repository.project(id: id) else {
+            throw MindSpaceRepositoryError.projectNotFound(id)
+        }
+        return try projectResult(project: project, previous: previous, updated: repository.tasks())
+    }
+
     public func completeTask(id: String) throws -> TaskActionResult {
         let completed = try repository.complete(taskID: id)
         let projectName = try completed.projectID.flatMap { try repository.project(id: $0)?.name }
@@ -178,11 +233,52 @@ public final class TaskActionService: @unchecked Sendable {
         }
     }
 
+    private func logEdit(from previous: MindSpaceTask, to updated: MindSpaceTask) throws -> TaskActionResult {
+        let projectName = try updated.projectID.flatMap { try repository.project(id: $0)?.name }
+        let event = TaskLogEvent(
+            eventID: eventID(),
+            timestamp: now(),
+            type: .edited,
+            task: updated,
+            projectName: projectName,
+            changedFields: changedFields(from: previous, to: updated)
+        )
+        return try log(event)
+    }
+
+    private func taskSnapshot(ids: Set<String>) throws -> [String: MindSpaceTask] {
+        var snapshot: [String: MindSpaceTask] = [:]
+        for id in ids {
+            guard let task = try repository.task(id: id) else {
+                throw MindSpaceRepositoryError.taskNotFound(id)
+            }
+            snapshot[id] = task
+        }
+        return snapshot
+    }
+
+    private func projectResult(
+        project: MindSpaceProject,
+        previous: [String: MindSpaceTask],
+        updated: [MindSpaceTask]
+    ) throws -> ProjectActionResult {
+        var changedTasks: [MindSpaceTask] = []
+        var issues: [String] = []
+        for task in updated {
+            guard let oldTask = previous[task.id], oldTask != task else { continue }
+            let result = try logEdit(from: oldTask, to: task)
+            changedTasks.append(result.task)
+            if let issue = result.loggingIssue { issues.append(issue) }
+        }
+        return ProjectActionResult(project: project, tasks: changedTasks, loggingIssues: issues)
+    }
+
     private func changedFields(from previous: MindSpaceTask, to updated: MindSpaceTask) -> [String: String] {
         var fields: [String: String] = [:]
         if previous.title != updated.title { fields["title"] = "\(previous.title) → \(updated.title)" }
         if previous.notes != updated.notes { fields["notes"] = "\(previous.notes ?? "") → \(updated.notes ?? "")" }
         if previous.projectID != updated.projectID { fields["project"] = "\(previous.projectID ?? "Inbox") → \(updated.projectID ?? "Inbox")" }
+        if previous.status != updated.status { fields["status"] = "\(previous.status.rawValue) → \(updated.status.rawValue)" }
         if previous.category != updated.category { fields["category"] = "\(previous.category ?? "") → \(updated.category ?? "")" }
         if previous.energy != updated.energy { fields["energy"] = "\(previous.energy ?? "") → \(updated.energy ?? "")" }
         if previous.dueDate != updated.dueDate { fields["due_date"] = "\(String(describing: previous.dueDate)) → \(String(describing: updated.dueDate))" }

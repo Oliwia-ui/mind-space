@@ -207,6 +207,29 @@ func projectLifecycle() throws {
     #expect(restored.archivedAt == nil)
 }
 
+@Test("editing a galaxy synchronises its name colour and task membership")
+func editingGalaxySynchronisesMembership() throws {
+    let repository = try MindSpaceRepository.inMemory()
+    let first = try repository.createTask(title: "Keep separate")
+    let second = try repository.createTask(title: "Join galaxy")
+    var project = try repository.createProject(
+        name: "Draft Galaxy",
+        colorToken: "cobalt",
+        assigningTaskIDs: [first.id]
+    )
+    project.name = "Creative Future"
+    project.colorToken = "orange"
+
+    let updated = try repository.updateProject(project, memberTaskIDs: [second.id])
+
+    #expect(updated.name == "Creative Future")
+    #expect(updated.colorToken == "orange")
+    #expect(try repository.task(id: first.id)?.projectID == nil)
+    #expect(try repository.task(id: first.id)?.status == .inbox)
+    #expect(try repository.task(id: second.id)?.projectID == project.id)
+    #expect(try repository.task(id: second.id)?.status == .active)
+}
+
 @Test("dissolving a galaxy preserves its tasks and returns them to Inbox")
 func dissolvingGalaxyPreservesTasks() throws {
     let repository = try MindSpaceRepository.inMemory()
@@ -226,6 +249,28 @@ func dissolvingGalaxyPreservesTasks() throws {
     #expect(try repository.task(id: second.id)?.projectID == nil)
     #expect(try repository.task(id: first.id)?.status == .inbox)
     #expect(try repository.task(id: second.id)?.status == .inbox)
+}
+
+@Test("dissolving a galaxy keeps completed task history reopenable in Inbox")
+func dissolvingGalaxyNormalizesCompletedTaskHistory() throws {
+    let repository = try MindSpaceRepository.inMemory()
+    let task = try repository.createTask(title: "Finished work")
+    let project = try repository.createProject(
+        name: "Finished Galaxy",
+        colorToken: "cobalt",
+        assigningTaskIDs: [task.id]
+    )
+    _ = try repository.complete(taskID: task.id)
+
+    try repository.dissolveProject(projectID: project.id)
+    let loaded = try repository.task(id: task.id)
+    let dissolvedTask = try #require(loaded)
+    #expect(dissolvedTask.projectID == nil)
+    #expect(dissolvedTask.previousStatus == .inbox)
+
+    let reopened = try repository.reopen(taskID: task.id)
+    #expect(reopened.status == .inbox)
+    #expect(reopened.projectID == nil)
 }
 
 @Test("preferences persist reduced motion and the native vault access boundary")

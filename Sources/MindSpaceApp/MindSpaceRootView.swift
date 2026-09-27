@@ -24,6 +24,12 @@ struct MindSpaceRootView: View {
         .sheet(item: $model.selectedTask) { task in
             TaskEditorView(model: model, task: task)
         }
+        .sheet(isPresented: $model.isNamingGalaxy, onDismiss: model.cancelGalaxyCreation) {
+            NewGalaxyView(model: model)
+        }
+        .sheet(item: $model.editingProject) { project in
+            ProjectGalaxyEditorView(model: model, project: project)
+        }
         .alert("Mind Space needs attention", isPresented: errorBinding) {
             Button("OK", role: .cancel) { model.errorMessage = nil }
         } message: {

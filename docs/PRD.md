@@ -22,6 +22,8 @@ The app is for one person who captures coursework, projects, ideas, and small ob
 - Data-driven Mind Space where cards represent tasks, cubes represent projects, and spheres represent ideas.
 - Pool-like rearrangement where any existing task, project, or idea can be dragged as the pusher; there is no separate pusher tool or pusher orb.
 - Soft capped collisions, restrained contact halos, gradual inertial settling, safe canvas boundaries, locally persisted positions, and a Reset Layout action.
+- Deliberate hold-to-group gestures that preview a constellation before changing data; quick collisions never create projects.
+- Saved galaxies use the existing project model: task membership, project name, and project colour stay synchronized with the structured view and can be edited or dissolved without deleting tasks.
 - A 700–1200 ms **MAKE IT MAKE SENSE** transition that preserves data while changing its presentation from spatial objects to task rows and project groups.
 
 ## Non-goals
@@ -33,10 +35,11 @@ Mind Space does not include accounts, cloud sync, collaboration, notifications, 
 1. Open Mind Space and see real unfinished work represented spatially.
 2. Capture a thought, which becomes an Inbox task unless a project is chosen.
 3. Select an object to inspect or edit the associated real item.
-4. Press **MAKE IT MAKE SENSE**.
-5. Objects converge and resolve into the structured task interface.
-6. Choose a short Today list, organise projects, and complete tasks.
-7. SQLite persists each action and the logging service appends the corresponding event to the configured Obsidian vault.
+4. Hold one thought against another to preview a constellation, then release to assign it to an existing project or name a new galaxy.
+5. Press **MAKE IT MAKE SENSE**.
+6. Objects converge and resolve into the structured task interface.
+7. Choose a short Today list, organise projects, and complete tasks.
+8. SQLite persists each action and the logging service appends the corresponding event to the configured Obsidian vault.
 
 ## Framework decision
 
@@ -62,7 +65,7 @@ Mind Space writes only to `Tasks/`. `Focus/` is reserved for the separate timer 
 
 ### Mind Space
 
-A near-black navy canvas contains faint stars and restrained orbital guides. Saved task cards, project cubes, and idea spheres occupy generous negative space around the warm burnt-orange transformation control. The transformation control is not a physics object and never acts as a pusher. Existing thought objects can be dragged into one another to create slow, soft movement; positions are saved after the objects settle.
+A near-black navy canvas contains faint stars and restrained orbital guides. Saved task cards, project cubes, and idea spheres float freely across the safe canvas instead of occupying a grid. The warm burnt-orange transformation control is not a physics object and never acts as a pusher. Existing thought objects can be dragged into one another to create slow, soft movement; positions are saved after the objects settle. Project relationships appear as faint constellation lines and coloured orbit auras around a stronger project centre. Holding compatible objects together previews a connection before any data changes.
 
 ### Structured view
 
@@ -78,6 +81,8 @@ A native SwiftUI `NavigationSplitView` contains Today, Inbox, Projects, Done, Lo
 - Motion explains continuity but never delays access; system Reduce Motion and the in-app preference shorten or remove it.
 - Physics remain deliberately non-game-like: speed is capped, boundary contact does not bounce, collisions are soft, and movement decays to rest.
 - Reset Layout clears only saved spatial positions and restores the calm automatic arrangement without changing tasks or projects.
+- A grouping preview requires a deliberate hold; passing collisions remain physical interactions only.
+- Dissolving a galaxy archives its project and returns its intact tasks to Inbox.
 - Vault failure cannot destroy or reject a valid task action.
 - Stable string IDs remain independent of database row identifiers so the timer app can link sessions safely.
 
@@ -98,6 +103,10 @@ A generic dashboard and a combined task/Pomodoro screen were considered. They we
 - Thought movement remains speed-limited, settles without chaotic bouncing, and cannot leave the safe canvas bounds.
 - Contact produces a subtle temporary halo, and settled positions survive application relaunch.
 - Reset Layout restores the automatic arrangement without mutating task or project data.
+- Holding an ungrouped task against a project and releasing after confirmation assigns the task to that project in both views.
+- Holding two unrelated tasks together can create a named, coloured project containing both stable task identities.
+- Project names, colours, and task membership can be edited later, and dissolving a project never deletes its tasks.
+- Existing project relationships render as subtle constellation lines and an orbit aura using the saved project colour.
 - **MAKE IT MAKE SENSE** reaches the structured view without mutating task data.
 - Reduced motion shortens or skips the transformation while direct manipulation remains available.
 - Create, edit, complete, reopen, and delete events append correct Markdown.

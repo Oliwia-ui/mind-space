@@ -19,7 +19,7 @@ struct MindSpaceCanvasView: View {
     }
 
     private var layoutSignature: [String] {
-        openTasks.map { "task:\($0.id):\($0.category ?? "")" }
+        openTasks.map { "task:\($0.id):\($0.category ?? ""):\($0.projectID ?? "")" }
             + visibleProjects.map { "project:\($0.id)" }
     }
 
@@ -31,6 +31,7 @@ struct MindSpaceCanvasView: View {
 
             ZStack {
                 orbitalGuides(in: geometry.size)
+                galaxyConnections(in: geometry.size)
 
                 VStack(spacing: 8) {
                     Text("MIND SPACE")
@@ -61,10 +62,10 @@ struct MindSpaceCanvasView: View {
                     let fallback = taskPosition(index: index, size: geometry.size)
                     let center = physics.center(for: task.id, fallback: thoughtPoint(fallback))
                     mindObject(for: task)
-                        .scaleEffect(physics.contactIDs.contains(task.id) ? 1.025 : 1)
+                        .scaleEffect(objectScale(for: task.id))
                         .shadow(
-                            color: physics.contactIDs.contains(task.id) ? Color.cyan.opacity(0.30) : .clear,
-                            radius: physics.contactIDs.contains(task.id) ? 19 : 0
+                            color: objectGlow(for: task.id),
+                            radius: isGroupingHighlighted(task.id) ? 28 : (physics.contactIDs.contains(task.id) ? 19 : 0)
                         )
                         .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
                         .rotationEffect(.degrees(model.isTransforming ? Double(index * 22) : 0))
@@ -86,10 +87,10 @@ struct MindSpaceCanvasView: View {
                             $0.projectID == project.id && $0.status != .completed && $0.status != .trashed
                         }.count
                     )
-                    .scaleEffect(physics.contactIDs.contains(project.id) ? 1.025 : 1)
+                    .scaleEffect(objectScale(for: project.id))
                     .shadow(
-                        color: physics.contactIDs.contains(project.id) ? Color.cyan.opacity(0.30) : .clear,
-                        radius: physics.contactIDs.contains(project.id) ? 19 : 0
+                        color: objectGlow(for: project.id),
+                        radius: isGroupingHighlighted(project.id) ? 28 : (physics.contactIDs.contains(project.id) ? 19 : 0)
                     )
                     .position(model.isTransforming ? centerPoint(in: geometry.size) : point(center))
                     .rotation3DEffect(.degrees(model.isTransforming ? 70 : -8), axis: (x: 0.7, y: 1, z: 0.2))
@@ -104,6 +105,17 @@ struct MindSpaceCanvasView: View {
                         model.selectedSection = .projects
                         transformToStructured()
                     }
+                }
+
+                if let preview = physics.groupingPreview,
+                   let first = physics.bodies.first(where: { $0.id == preview.draggedID }),
+                   let second = physics.bodies.first(where: { $0.id == preview.targetID }) {
+                    GroupingPreviewBadge(preview: preview)
+                        .position(
+                            x: (first.center.x + second.center.x) / 2,
+                            y: (first.center.y + second.center.y) / 2 - 46
+                        )
+                        .allowsHitTesting(false)
                 }
 
                 VStack(spacing: 14) {
@@ -214,8 +226,91 @@ struct MindSpaceCanvasView: View {
             }
             .onEnded { value in
                 physics.drag(objectID: objectID, to: thoughtPoint(value.location))
-                physics.endDragging(objectID: objectID)
+                if let pair = physics.endDragging(objectID: objectID) {
+                    model.handleGroup(pair)
+                }
             }
+    }
+
+    private func galaxyConnections(in size: CGSize) -> some View {
+        Canvas { context, _ in
+            let centers = Dictionary(
+                uniqueKeysWithValues: physics.bodies.map {
+                    ($0.id, CGPoint(x: $0.center.x, y: $0.center.y))
+                }
+            )
+
+            for project in visibleProjects {
+                guard let projectCenter = centers[project.id] else { continue }
+                let members = openTasks.filter { $0.projectID == project.id }
+                let color = projectColor(project.colorToken)
+
+                if !members.isEmpty {
+                    let orbitRadius = min(86 + CGFloat(members.count) * 10, 168)
+                    let orbit = Path(ellipseIn: CGRect(
+                        x: projectCenter.x - orbitRadius,
+                        y: projectCenter.y - orbitRadius * 0.62,
+                        width: orbitRadius * 2,
+                        height: orbitRadius * 1.24
+                    ))
+                    context.stroke(
+                        orbit,
+                        with: .color(color.opacity(0.10)),
+                        style: StrokeStyle(lineWidth: 1, dash: [4, 8])
+                    )
+                }
+
+                for task in members {
+                    guard let taskCenter = centers[task.id] else { continue }
+                    var line = Path()
+                    line.move(to: projectCenter)
+                    line.addLine(to: taskCenter)
+                    context.stroke(line, with: .color(color.opacity(0.25)), lineWidth: 0.85)
+                }
+            }
+
+            if let preview = physics.groupingPreview,
+               let first = centers[preview.draggedID],
+               let second = centers[preview.targetID] {
+                var line = Path()
+                line.move(to: first)
+                line.addLine(to: second)
+                context.stroke(
+                    line,
+                    with: .color(Color.orange.opacity(preview.isReady ? 0.82 : 0.48)),
+                    style: StrokeStyle(lineWidth: preview.isReady ? 2 : 1.25, dash: [5, 5])
+                )
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        .allowsHitTesting(false)
+    }
+
+    private func isGroupingHighlighted(_ objectID: String) -> Bool {
+        guard let preview = physics.groupingPreview else { return false }
+        return preview.draggedID == objectID || preview.targetID == objectID
+    }
+
+    private func objectScale(for objectID: String) -> CGFloat {
+        if let preview = physics.groupingPreview,
+           preview.draggedID == objectID || preview.targetID == objectID {
+            return preview.isReady ? 1.065 : 1.035
+        }
+        return physics.contactIDs.contains(objectID) ? 1.025 : 1
+    }
+
+    private func objectGlow(for objectID: String) -> Color {
+        if isGroupingHighlighted(objectID) { return .orange.opacity(0.42) }
+        return physics.contactIDs.contains(objectID) ? .cyan.opacity(0.30) : .clear
+    }
+
+    private func projectColor(_ token: String) -> Color {
+        switch token.lowercased() {
+        case "orange": .orange
+        case "purple": .purple
+        case "green": .green
+        default: .blue
+        }
     }
 
     private func orbitalGuides(in size: CGSize) -> some View {
@@ -295,6 +390,36 @@ struct MindSpaceCanvasView: View {
     }
 }
 
+private struct GroupingPreviewBadge: View {
+    let preview: ThoughtGroupPreview
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .stroke(.white.opacity(0.12), lineWidth: 2)
+                Circle()
+                    .trim(from: 0, to: max(preview.progress, 0.06))
+                    .stroke(
+                        preview.isReady ? Color.orange : Color.white.opacity(0.7),
+                        style: StrokeStyle(lineWidth: 2.2, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 18, height: 18)
+
+            Text(preview.isReady ? "Release to form constellation" : "Hold to connect")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.88))
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(.black.opacity(0.72), in: Capsule())
+        .overlay(Capsule().stroke(Color.orange.opacity(preview.isReady ? 0.58 : 0.22), lineWidth: 1))
+        .shadow(color: .orange.opacity(preview.isReady ? 0.24 : 0.08), radius: 16)
+    }
+}
+
 private struct FloatingTaskCard: View {
     let task: MindSpaceTask
     let projectName: String?
@@ -364,10 +489,20 @@ private struct ProjectOrb: View {
             Text(project.name).font(.caption.weight(.semibold)).lineLimit(1)
             Text("\(taskCount) open").font(.caption2).opacity(0.48)
         }
-        .foregroundStyle(.white.opacity(0.84))
+        .foregroundStyle(projectColor)
         .frame(width: 108, height: 92)
         .glassPanel(cornerRadius: 15)
+        .shadow(color: projectColor.opacity(0.14), radius: 18)
         .accessibilityLabel("Project \(project.name), \(taskCount) open tasks")
+    }
+
+    private var projectColor: Color {
+        switch project.colorToken.lowercased() {
+        case "orange": .orange.opacity(0.88)
+        case "purple": .purple.opacity(0.88)
+        case "green": .green.opacity(0.82)
+        default: .blue.opacity(0.88)
+        }
     }
 }
 

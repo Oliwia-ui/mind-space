@@ -243,6 +243,45 @@ public final class MindSpaceRepository: @unchecked Sendable {
         return updated
     }
 
+    public func updateProject(_ project: MindSpaceProject, memberTaskIDs: [String]) throws -> MindSpaceProject {
+        _ = try requiredProject(project.id)
+        let selectedIDs = Set(memberTaskIDs)
+        var selectedTasks = try selectedIDs.map(requiredTask)
+        var removedTasks = try tasks().filter { $0.projectID == project.id && !selectedIDs.contains($0.id) }
+        var updated = project
+        updated.name = try validatedProjectName(project.name)
+        updated.updatedAt = now()
+
+        try transaction {
+            let statement = try prepare("UPDATE projects SET name=?,color_token=?,updated_at=?,is_archived=?,archived_at=? WHERE id=?")
+            defer { sqlite3_finalize(statement) }
+            try bind(updated.name,to:statement,at:1); try bind(updated.colorToken,to:statement,at:2); sqlite3_bind_double(statement,3,updated.updatedAt.timeIntervalSince1970)
+            sqlite3_bind_int(statement,4,updated.isArchived ? 1 : 0); bind(updated.archivedAt?.timeIntervalSince1970,to:statement,at:5); try bind(updated.id,to:statement,at:6); try stepDone(statement)
+
+            for index in removedTasks.indices {
+                removedTasks[index].projectID = nil
+                if removedTasks[index].status == .active { removedTasks[index].status = .inbox }
+                if (removedTasks[index].status == .completed || removedTasks[index].status == .trashed),
+                   removedTasks[index].previousStatus == .active {
+                    removedTasks[index].previousStatus = .inbox
+                }
+                removedTasks[index].updatedAt = updated.updatedAt
+                try replace(removedTasks[index])
+            }
+            for index in selectedTasks.indices {
+                selectedTasks[index].projectID = project.id
+                if selectedTasks[index].status == .inbox { selectedTasks[index].status = .active }
+                if (selectedTasks[index].status == .completed || selectedTasks[index].status == .trashed),
+                   selectedTasks[index].previousStatus == .inbox {
+                    selectedTasks[index].previousStatus = .active
+                }
+                selectedTasks[index].updatedAt = updated.updatedAt
+                try replace(selectedTasks[index])
+            }
+        }
+        return updated
+    }
+
     public func setProjectArchived(projectID: String, isArchived: Bool) throws -> MindSpaceProject {
         var project = try requiredProject(projectID); project.isArchived = isArchived; project.archivedAt = isArchived ? now() : nil
         return try updateProject(project)
@@ -253,7 +292,7 @@ public final class MindSpaceRepository: @unchecked Sendable {
         let date = now()
         try transaction {
             let taskStatement = try prepare(
-                "UPDATE tasks SET project_id=NULL,status=CASE WHEN status='active' THEN 'inbox' ELSE status END,updated_at=? WHERE project_id=?"
+                "UPDATE tasks SET project_id=NULL,status=CASE WHEN status='active' THEN 'inbox' ELSE status END,previous_status=CASE WHEN status IN ('completed','trashed') AND previous_status='active' THEN 'inbox' ELSE previous_status END,updated_at=? WHERE project_id=?"
             )
             defer { sqlite3_finalize(taskStatement) }
             sqlite3_bind_double(taskStatement, 1, date.timeIntervalSince1970)

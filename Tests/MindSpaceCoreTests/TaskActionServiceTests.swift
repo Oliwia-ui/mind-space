@@ -96,6 +96,46 @@ func editingTaskLogsChangedFields() throws {
     #expect(event.changedFields["notes"] == "Old notes → New notes")
 }
 
+@Test("assigning a thought to a project logs the saved relationship")
+func assigningThoughtLogsProjectChange() throws {
+    let instant = Date(timeIntervalSince1970: 1_797_774_138)
+    let repository = try MindSpaceRepository.inMemory(now: { instant })
+    let task = try repository.createTask(title: "University assignment")
+    let project = try repository.createProject(name: "University", colorToken: "cobalt")
+    let logger = RecordingTaskEventLogger()
+    let service = TaskActionService(repository: repository, logger: logger, now: { instant })
+
+    let result = try service.assignTask(id: task.id, to: project.id)
+
+    #expect(result.task.projectID == project.id)
+    #expect(result.task.status == .active)
+    let event = try #require(logger.events.first)
+    #expect(event.type == .edited)
+    #expect(event.projectName == "University")
+    #expect(event.changedFields["project"] != nil)
+}
+
+@Test("creating a galaxy logs membership changes for every original task")
+func creatingGalaxyLogsEveryMembershipChange() throws {
+    let instant = Date(timeIntervalSince1970: 1_797_774_138)
+    let repository = try MindSpaceRepository.inMemory(now: { instant })
+    let first = try repository.createTask(title: "Learn 3D design")
+    let second = try repository.createTask(title: "Build portfolio")
+    let logger = RecordingTaskEventLogger()
+    let service = TaskActionService(repository: repository, logger: logger, now: { instant })
+
+    let result = try service.createProject(
+        name: "Creative Future",
+        colorToken: "purple",
+        assigningTaskIDs: [first.id, second.id]
+    )
+
+    #expect(result.project.name == "Creative Future")
+    #expect(result.tasks.map(\.projectID).allSatisfy { $0 == result.project.id })
+    #expect(logger.events.count == 2)
+    #expect(logger.events.allSatisfy { $0.type == .edited && $0.projectName == "Creative Future" })
+}
+
 @Test("completing a task writes a completion event")
 func completingTaskWritesCompletionEvent() throws {
     let instant = Date(timeIntervalSince1970: 1_797_774_138)
