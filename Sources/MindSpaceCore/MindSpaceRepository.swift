@@ -186,8 +186,13 @@ public final class MindSpaceRepository: @unchecked Sendable {
         return try updateTask(task)
     }
 
-    public func createProject(name: String, colorToken: String) throws -> MindSpaceProject {
+    public func createProject(
+        name: String,
+        colorToken: String,
+        assigningTaskIDs: [String] = []
+    ) throws -> MindSpaceProject {
         let name = try validatedProjectName(name)
+        var tasksToAssign = try assigningTaskIDs.map(requiredTask)
         let date = now()
         let project = MindSpaceProject(id: projectID(), name: name, colorToken: colorToken, createdAt: date, updatedAt: date)
         try transaction {
@@ -196,6 +201,13 @@ public final class MindSpaceRepository: @unchecked Sendable {
             try bind(project.id, to: statement, at: 1); try bind(project.name, to: statement, at: 2); try bind(project.colorToken, to: statement, at: 3)
             sqlite3_bind_double(statement, 4, date.timeIntervalSince1970); sqlite3_bind_double(statement, 5, date.timeIntervalSince1970)
             try stepDone(statement)
+
+            for index in tasksToAssign.indices {
+                tasksToAssign[index].projectID = project.id
+                if tasksToAssign[index].status == .inbox { tasksToAssign[index].status = .active }
+                tasksToAssign[index].updatedAt = date
+                try replace(tasksToAssign[index])
+            }
         }
         return project
     }
@@ -234,6 +246,29 @@ public final class MindSpaceRepository: @unchecked Sendable {
     public func setProjectArchived(projectID: String, isArchived: Bool) throws -> MindSpaceProject {
         var project = try requiredProject(projectID); project.isArchived = isArchived; project.archivedAt = isArchived ? now() : nil
         return try updateProject(project)
+    }
+
+    public func dissolveProject(projectID: String) throws {
+        _ = try requiredProject(projectID)
+        let date = now()
+        try transaction {
+            let taskStatement = try prepare(
+                "UPDATE tasks SET project_id=NULL,status=CASE WHEN status='active' THEN 'inbox' ELSE status END,updated_at=? WHERE project_id=?"
+            )
+            defer { sqlite3_finalize(taskStatement) }
+            sqlite3_bind_double(taskStatement, 1, date.timeIntervalSince1970)
+            try bind(projectID, to: taskStatement, at: 2)
+            try stepDone(taskStatement)
+
+            let projectStatement = try prepare(
+                "UPDATE projects SET is_archived=1,archived_at=?,updated_at=? WHERE id=?"
+            )
+            defer { sqlite3_finalize(projectStatement) }
+            sqlite3_bind_double(projectStatement, 1, date.timeIntervalSince1970)
+            sqlite3_bind_double(projectStatement, 2, date.timeIntervalSince1970)
+            try bind(projectID, to: projectStatement, at: 3)
+            try stepDone(projectStatement)
+        }
     }
 
     public func preferences() throws -> MindSpacePreferences {

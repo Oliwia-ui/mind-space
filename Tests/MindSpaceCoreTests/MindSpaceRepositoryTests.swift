@@ -40,6 +40,28 @@ func identifiersCanBeInjected() throws {
     #expect(task.id == "task_fixed")
 }
 
+@Test("creating a galaxy saves the project and assigns every original task atomically")
+func creatingGalaxyAssignsTasks() throws {
+    let repository = try MindSpaceRepository.inMemory(
+        taskID: { "task_\(UUID().uuidString)" },
+        projectID: { "project_creative_future" }
+    )
+    let first = try repository.createTask(title: "Learn 3D design")
+    let second = try repository.createTask(title: "Build portfolio")
+
+    let project = try repository.createProject(
+        name: "Creative Future",
+        colorToken: "purple",
+        assigningTaskIDs: [first.id, second.id]
+    )
+
+    #expect(project.id == "project_creative_future")
+    #expect(try repository.task(id: first.id)?.projectID == project.id)
+    #expect(try repository.task(id: second.id)?.projectID == project.id)
+    #expect(try repository.task(id: first.id)?.status == .active)
+    #expect(try repository.task(id: second.id)?.status == .active)
+}
+
 @Test("tasks cannot reference a missing project")
 func missingProjectIsRejected() throws {
     let repository = try MindSpaceRepository.inMemory()
@@ -183,6 +205,27 @@ func projectLifecycle() throws {
     let restored = try repository.setProjectArchived(projectID: project.id, isArchived: false)
     #expect(!restored.isArchived)
     #expect(restored.archivedAt == nil)
+}
+
+@Test("dissolving a galaxy preserves its tasks and returns them to Inbox")
+func dissolvingGalaxyPreservesTasks() throws {
+    let repository = try MindSpaceRepository.inMemory()
+    let first = try repository.createTask(title: "Research")
+    let second = try repository.createTask(title: "Prototype")
+    let project = try repository.createProject(
+        name: "New Direction",
+        colorToken: "green",
+        assigningTaskIDs: [first.id, second.id]
+    )
+
+    try repository.dissolveProject(projectID: project.id)
+
+    #expect(try repository.projects().isEmpty)
+    #expect(try repository.projects(includeArchived: true).first?.isArchived == true)
+    #expect(try repository.task(id: first.id)?.projectID == nil)
+    #expect(try repository.task(id: second.id)?.projectID == nil)
+    #expect(try repository.task(id: first.id)?.status == .inbox)
+    #expect(try repository.task(id: second.id)?.status == .inbox)
 }
 
 @Test("preferences persist reduced motion and the native vault access boundary")
